@@ -6,7 +6,7 @@ import { db } from '@/lib/db/connection';
 import * as schema from '@/lib/db/schemas/index.schema';
 
 export const auth = betterAuth({
-    baseURL: env.BETTER_AUTH_URL,
+    baseURL: `${process.env.BETTER_AUTH_URL}/api/v1/auth`,
     secret: env.BETTER_AUTH_SECRET,
     trustedOrigins: env.ALLOWED_ORIGINS,
     emailAndPassword: {
