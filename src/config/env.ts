@@ -3,6 +3,9 @@ import { z } from 'zod';
 
 export const envSchema = z.object({
     NODE_ENV: z.enum(['dev', 'test', 'production']).default('dev'),
+    CLOUDINARY_CLOUD_NAME: z.string(),
+    CLOUDINARY_API_KEY: z.string(),
+    CLOUDINARY_API_SECRET: z.string(),
     PORT: z.coerce.number().default(3333),
     HOST: z.string().default('0.0.0.0'),
     DATABASE_URL: z.string(),

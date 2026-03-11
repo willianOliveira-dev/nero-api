@@ -6,7 +6,7 @@ import {
 } from 'fastify-type-provider-zod';
 import { env } from '@/config/env';
 import { registerPlugins } from '@/plugins/index.plugin';
-import { registerRoutes } from './routes/root.route';
+import { registerRoutes } from './routes/root.routes';
 
 export async function boostrap() {
     const app = Fastify({
