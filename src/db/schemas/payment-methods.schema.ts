@@ -14,60 +14,62 @@
  */
 
 import {
-  pgTable,
-  uuid,
-  text,
-  varchar,
-  smallint,
-  boolean,
-  timestamp,
-  index,
-  pgEnum,
-} from "drizzle-orm/pg-core";
-import { user } from "./auth.schema";
+    boolean,
+    index,
+    pgEnum,
+    pgTable,
+    smallint,
+    text,
+    timestamp,
+    varchar,
+} from 'drizzle-orm/pg-core';
+import { uuidv7 } from 'uuidv7';
+import { user } from './auth.schema';
 
 // ── Enums ─────────────────────────────────────────────────────
-export const paymentMethodTypeEnum = pgEnum("payment_method_type_enum", [
-  "card",
-  "paypal",
-  "pix",
+export const paymentMethodTypeEnum = pgEnum('payment_method_type_enum', [
+    'card',
+    'paypal',
+    'pix',
 ]);
 
-export const cardBrandEnum = pgEnum("card_brand_enum", [
-  "visa",
-  "mastercard",
-  "amex",
-  "discover",
-  "elo",
-  "hipercard",
-  "other",
+export const cardBrandEnum = pgEnum('card_brand_enum', [
+    'visa',
+    'mastercard',
+    'amex',
+    'discover',
+    'elo',
+    'hipercard',
+    'other',
 ]);
 
 // ── Table ─────────────────────────────────────────────────────
 export const paymentMethods = pgTable(
-  "payment_methods",
-  {
-    id:                    uuid("id").primaryKey().defaultRandom(),
-    userId:                text("user_id")
-                             .notNull()
-                             .references(() => user.id, { onDelete: "cascade" }),
-    stripePaymentMethodId: text("stripe_payment_method_id").notNull().unique(),
-    type:                  paymentMethodTypeEnum("type").notNull(),
-    brand:                 cardBrandEnum("brand"),
-    /** Últimos 4 dígitos exibidos como **** 4187 */
-    last4:                 varchar("last4", { length: 4 }),
-    expMonth:              smallint("exp_month"),
-    expYear:               smallint("exp_year"),
-    /** PayPal ou outros provedores: e-mail vinculado */
-    providerEmail:         text("provider_email"),
-    isDefault:             boolean("is_default").notNull().default(false),
-    createdAt:             timestamp("created_at").notNull().defaultNow(),
-  },
-  (t) => [
-    index("idx_payment_methods_user_id").on(t.userId),
-  ]
+    'payment_methods',
+    {
+        id: text('id')
+            .primaryKey()
+            .$defaultFn(() => uuidv7()),
+        userId: text('user_id')
+            .notNull()
+            .references(() => user.id, { onDelete: 'cascade' }),
+        stripePaymentMethodId: text('stripe_payment_method_id')
+            .notNull()
+            .unique(),
+        type: paymentMethodTypeEnum('type').notNull(),
+        brand: cardBrandEnum('brand'),
+        /** Últimos 4 dígitos exibidos como **** 4187 */
+        last4: varchar('last4', { length: 4 }),
+        expMonth: smallint('exp_month'),
+        expYear: smallint('exp_year'),
+        /** PayPal ou outros provedores: e-mail vinculado */
+        providerEmail: text('provider_email'),
+        isDefault: boolean('is_default').notNull().default(false),
+        createdAt: timestamp('created_at').notNull().defaultNow(),
+    },
+    (t) => [index('idx_payment_methods_user_id').on(t.userId)],
 );
 
 // ── Types ─────────────────────────────────────────────────────
-export type PaymentMethod    = typeof paymentMethods.$inferSelect;
+export type PaymentMethod = typeof paymentMethods.$inferSelect;
 export type NewPaymentMethod = typeof paymentMethods.$inferInsert;

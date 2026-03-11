@@ -18,18 +18,21 @@ import {
     text,
     timestamp,
     uniqueIndex,
-    uuid,
     varchar,
 } from 'drizzle-orm/pg-core';
+import { uuidv7 } from 'uuidv7';
 
 // ── Table ─────────────────────────────────────────────────────
+
 export const categories = pgTable(
     'categories',
     {
-        id: uuid('id').primaryKey().defaultRandom(),
+        id: text('id')
+            .primaryKey()
+            .$defaultFn(() => uuidv7()),
         name: varchar('name', { length: 100 }).notNull(),
         slug: varchar('slug', { length: 120 }).notNull().unique(),
-        parentId: uuid('parent_id'),
+        parentId: text('parent_id'),
         iconUrl: text('icon_url'),
         imageUrl: text('image_url'),
         sizeGuideUrl: text('size_guide_url'),

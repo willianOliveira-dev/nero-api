@@ -25,9 +25,9 @@ import {
     smallint,
     text,
     timestamp,
-    uuid,
     varchar,
 } from 'drizzle-orm/pg-core';
+import { uuidv7 } from 'uuidv7';
 import { user } from './auth.schema';
 import { products } from './products.schema';
 
@@ -42,15 +42,17 @@ export const reviewStatusEnum = pgEnum('review_status_enum', [
 export const productReviews = pgTable(
     'product_reviews',
     {
-        id: uuid('id').primaryKey().defaultRandom(),
-        productId: uuid('product_id')
+        id: text('id')
+            .primaryKey()
+            .$defaultFn(() => uuidv7()),
+        productId: text('product_id')
             .notNull()
             .references(() => products.id, { onDelete: 'cascade' }),
         userId: text('user_id')
             .notNull()
             .references(() => user.id, { onDelete: 'cascade' }),
         /** FK para vincular o review a uma compra verificada */
-        orderId: uuid('order_id'),
+        orderId: text('order_id'),
         /** 1 a 5 estrelas — CHECK constraint adicionado abaixo */
         rating: smallint('rating').notNull(),
         title: varchar('title', { length: 120 }),

@@ -8,7 +8,8 @@
  * ─────────────────────────────────────────────────────────────
  */
 
-import { pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { uuidv7 } from 'uuidv7';
 import { user } from './auth.schema';
 
 // ── Enum ──────────────────────────────────────────────────────
@@ -21,7 +22,9 @@ export const genderPreferenceEnum = pgEnum('gender_preference_enum', [
 
 // ── Table ─────────────────────────────────────────────────────
 export const userProfiles = pgTable('user_profiles', {
-    id: uuid('id').primaryKey().defaultRandom(),
+    id: text('id')
+        .primaryKey()
+        .$defaultFn(() => uuidv7()),
     userId: text('user_id')
         .notNull()
         .unique()
@@ -33,7 +36,6 @@ export const userProfiles = pgTable('user_profiles', {
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
-
 // ── Types ─────────────────────────────────────────────────────
 export type UserProfile = typeof userProfiles.$inferSelect;
 export type NewUserProfile = typeof userProfiles.$inferInsert;

@@ -21,7 +21,6 @@ import {
     pgTable,
     smallint,
     text,
-    uuid,
     varchar,
 } from 'drizzle-orm/pg-core';
 import { uuidv7 } from 'uuidv7';
@@ -34,12 +33,12 @@ export const productImages = pgTable(
     {
         id: text('id')
             .primaryKey()
-            .$onUpdateFn(() => uuidv7()),
-        productId: uuid('product_id')
+            .$defaultFn(() => uuidv7()),
+        productId: text('product_id')
             .notNull()
             .references(() => products.id, { onDelete: 'cascade' }),
         /** null = imagem geral do produto (não específica de variante) */
-        variantId: uuid('variant_id').references(() => productVariants.id, {
+        variantId: text('variant_id').references(() => productVariants.id, {
             onDelete: 'set null',
         }),
         /** URL pública no S3 / Cloudflare R2 */

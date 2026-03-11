@@ -20,9 +20,9 @@ import {
     text,
     timestamp,
     uniqueIndex,
-    uuid,
     varchar,
 } from 'drizzle-orm/pg-core';
+import { uuidv7 } from 'uuidv7';
 import { user } from './auth.schema';
 import { products } from './products.schema';
 
@@ -30,7 +30,9 @@ import { products } from './products.schema';
 export const wishlists = pgTable(
     'wishlists',
     {
-        id: uuid('id').primaryKey().defaultRandom(),
+        id: text('id')
+            .primaryKey()
+            .$defaultFn(() => uuidv7()),
         userId: text('user_id')
             .notNull()
             .references(() => user.id, { onDelete: 'cascade' }),
@@ -45,11 +47,13 @@ export const wishlists = pgTable(
 export const wishlistItems = pgTable(
     'wishlist_items',
     {
-        id: uuid('id').primaryKey().defaultRandom(),
-        wishlistId: uuid('wishlist_id')
+        id: text('id')
+            .primaryKey()
+            .$defaultFn(() => uuidv7()),
+        wishlistId: text('wishlist_id')
             .notNull()
             .references(() => wishlists.id, { onDelete: 'cascade' }),
-        productId: uuid('product_id')
+        productId: text('product_id')
             .notNull()
             .references(() => products.id, { onDelete: 'cascade' }),
         addedAt: timestamp('added_at').notNull().defaultNow(),

@@ -30,8 +30,8 @@ import {
     text,
     timestamp,
     uniqueIndex,
-    uuid,
 } from 'drizzle-orm/pg-core';
+import { uuidv7 } from 'uuidv7';
 import { user } from './auth.schema';
 import { coupons } from './coupons.schema';
 import { paymentMethods } from './payment-methods.schema';
@@ -70,7 +70,9 @@ export type ProductSnapshot = {
 export const orders = pgTable(
     'orders',
     {
-        id: uuid('id').primaryKey().defaultRandom(),
+        id: text('id')
+            .primaryKey()
+            .$defaultFn(() => uuidv7()),
         userId: text('user_id')
             .notNull()
             .references(() => user.id, { onDelete: 'restrict' }),
@@ -97,10 +99,10 @@ export const orders = pgTable(
         }).notNull(),
 
         // ── Referências
-        couponId: uuid('coupon_id').references(() => coupons.id, {
+        couponId: text('coupon_id').references(() => coupons.id, {
             onDelete: 'set null',
         }),
-        shippingAddressId: uuid('shipping_address_id').references(
+        shippingAddressId: text('shipping_address_id').references(
             () => userAddresses.id,
             {
                 onDelete: 'set null',
@@ -110,7 +112,7 @@ export const orders = pgTable(
         shippingAddress: jsonb('shipping_address')
             .$type<ShippingAddressSnapshot>()
             .notNull(),
-        paymentMethodId: uuid('payment_method_id').references(
+        paymentMethodId: text('payment_method_id').references(
             () => paymentMethods.id,
             {
                 onDelete: 'set null',
@@ -137,14 +139,16 @@ export const orders = pgTable(
 export const orderItems = pgTable(
     'order_items',
     {
-        id: uuid('id').primaryKey().defaultRandom(),
-        orderId: uuid('order_id')
+        id: text('id')
+            .primaryKey()
+            .$defaultFn(() => uuidv7()),
+        orderId: text('order_id')
             .notNull()
             .references(() => orders.id, { onDelete: 'cascade' }),
-        productId: uuid('product_id').references(() => products.id, {
+        productId: text('product_id').references(() => products.id, {
             onDelete: 'set null',
         }),
-        variantId: uuid('variant_id').references(() => productVariants.id, {
+        variantId: text('variant_id').references(() => productVariants.id, {
             onDelete: 'set null',
         }),
         quantity: integer('quantity').notNull(),

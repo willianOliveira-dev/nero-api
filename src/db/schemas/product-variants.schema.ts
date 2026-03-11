@@ -21,10 +21,11 @@ import {
     jsonb,
     numeric,
     pgTable,
+    text,
     uniqueIndex,
-    uuid,
     varchar,
 } from 'drizzle-orm/pg-core';
+import { uuidv7 } from 'uuidv7';
 import { products } from './products.schema';
 
 // ── Types para o JSONB de atributos ──────────────────────────
@@ -39,8 +40,10 @@ export type VariantAttributes = {
 export const productVariants = pgTable(
     'product_variants',
     {
-        id: uuid('id').primaryKey().defaultRandom(),
-        productId: uuid('product_id')
+        id: text('id')
+            .primaryKey()
+            .$defaultFn(() => uuidv7()),
+        productId: text('product_id')
             .notNull()
             .references(() => products.id, { onDelete: 'cascade' }),
         /** Ex: JACKET-M-LEMON — deve ser único globalmente */
@@ -56,7 +59,6 @@ export const productVariants = pgTable(
         index('idx_product_variants_product_id').on(t.productId),
     ],
 );
-
 // ── Types ─────────────────────────────────────────────────────
 export type ProductVariant = typeof productVariants.$inferSelect;
 export type NewProductVariant = typeof productVariants.$inferInsert;

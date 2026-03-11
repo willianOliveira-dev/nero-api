@@ -11,30 +11,27 @@
  * ─────────────────────────────────────────────────────────────
  */
 
-import {
-  pgTable,
-  uuid,
-  varchar,
-  smallint,
-  pgEnum,
-} from "drizzle-orm/pg-core";
+import { pgEnum, pgTable, smallint, text, varchar } from 'drizzle-orm/pg-core';
+import { uuidv7 } from 'uuidv7';
 
 // ── Enum ──────────────────────────────────────────────────────
-export const attributeDisplayTypeEnum = pgEnum("attribute_display_type_enum", [
-  "selector",   // botões S / M / L / XL
-  "swatch",     // círculo de cor com hexColor
-  "dropdown",   // select dropdown
+export const attributeDisplayTypeEnum = pgEnum('attribute_display_type_enum', [
+    'selector', // botões S / M / L / XL
+    'swatch', // círculo de cor com hexColor
+    'dropdown', // select dropdown
 ]);
 
 // ── Table ─────────────────────────────────────────────────────
-export const attributeTypes = pgTable("attribute_types", {
-  id:          uuid("id").primaryKey().defaultRandom(),
-  name:        varchar("name", { length: 50 }).notNull().unique(),
-  label:       varchar("label", { length: 80 }).notNull(),
-  displayType: attributeDisplayTypeEnum("display_type").notNull(),
-  sortOrder:   smallint("sort_order").notNull().default(0),
+export const attributeTypes = pgTable('attribute_types', {
+    id: text('id')
+        .primaryKey()
+        .$defaultFn(() => uuidv7()),
+    name: varchar('name', { length: 50 }).notNull().unique(),
+    label: varchar('label', { length: 80 }).notNull(),
+    displayType: attributeDisplayTypeEnum('display_type').notNull(),
+    sortOrder: smallint('sort_order').notNull().default(0),
 });
 
 // ── Types ─────────────────────────────────────────────────────
-export type AttributeType    = typeof attributeTypes.$inferSelect;
+export type AttributeType = typeof attributeTypes.$inferSelect;
 export type NewAttributeType = typeof attributeTypes.$inferInsert;

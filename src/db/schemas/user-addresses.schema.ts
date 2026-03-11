@@ -14,16 +14,18 @@ import {
     pgTable,
     text,
     timestamp,
-    uuid,
     varchar,
 } from 'drizzle-orm/pg-core';
+import { uuidv7 } from 'uuidv7';
 import { user } from './auth.schema';
 
 // ── Table ─────────────────────────────────────────────────────
 export const userAddresses = pgTable(
     'user_addresses',
     {
-        id: uuid('id').primaryKey().defaultRandom(),
+        id: text('id')
+            .primaryKey()
+            .$defaultFn(() => uuidv7()),
         userId: text('user_id')
             .notNull()
             .references(() => user.id, { onDelete: 'cascade' }),

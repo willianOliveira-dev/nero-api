@@ -9,7 +9,7 @@ CREATE TYPE "public"."product_gender_enum" AS ENUM('men', 'women', 'kids', 'unis
 CREATE TYPE "public"."product_status_enum" AS ENUM('draft', 'active', 'archived');--> statement-breakpoint
 CREATE TYPE "public"."gender_preference_enum" AS ENUM('men', 'women', 'kids', 'unisex');--> statement-breakpoint
 CREATE TABLE "attribute_types" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" text PRIMARY KEY NOT NULL,
 	"name" varchar(50) NOT NULL,
 	"label" varchar(80) NOT NULL,
 	"display_type" "attribute_display_type_enum" NOT NULL,
@@ -66,19 +66,19 @@ CREATE TABLE "verification" (
 );
 --> statement-breakpoint
 CREATE TABLE "cart_items" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"cart_id" uuid NOT NULL,
-	"product_id" uuid NOT NULL,
-	"variant_id" uuid,
+	"id" text PRIMARY KEY NOT NULL,
+	"cart_id" text NOT NULL,
+	"product_id" text NOT NULL,
+	"variant_id" text,
 	"quantity" integer DEFAULT 1 NOT NULL,
 	"price_snapshot" numeric(10, 2) NOT NULL,
 	CONSTRAINT "chk_cart_item_quantity" CHECK ("cart_items"."quantity" > 0)
 );
 --> statement-breakpoint
 CREATE TABLE "carts" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" text PRIMARY KEY NOT NULL,
 	"user_id" text NOT NULL,
-	"coupon_id" uuid,
+	"coupon_id" text,
 	"subtotal" numeric(10, 2) DEFAULT '0' NOT NULL,
 	"shipping_cost" numeric(10, 2) DEFAULT '8.00' NOT NULL,
 	"tax_amount" numeric(10, 2) DEFAULT '0' NOT NULL,
@@ -88,10 +88,10 @@ CREATE TABLE "carts" (
 );
 --> statement-breakpoint
 CREATE TABLE "categories" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" text PRIMARY KEY NOT NULL,
 	"name" varchar(100) NOT NULL,
 	"slug" varchar(120) NOT NULL,
-	"parent_id" uuid,
+	"parent_id" text,
 	"icon_url" text,
 	"image_url" text,
 	"size_guide_url" text,
@@ -102,7 +102,7 @@ CREATE TABLE "categories" (
 );
 --> statement-breakpoint
 CREATE TABLE "coupons" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" text PRIMARY KEY NOT NULL,
 	"code" varchar(50) NOT NULL,
 	"type" "coupon_type_enum" NOT NULL,
 	"value" numeric(10, 2) NOT NULL,
@@ -115,7 +115,7 @@ CREATE TABLE "coupons" (
 );
 --> statement-breakpoint
 CREATE TABLE "home_sections" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" text PRIMARY KEY NOT NULL,
 	"slug" varchar(80) NOT NULL,
 	"title" varchar(120) NOT NULL,
 	"type" "home_section_type_enum" NOT NULL,
@@ -127,17 +127,17 @@ CREATE TABLE "home_sections" (
 );
 --> statement-breakpoint
 CREATE TABLE "order_items" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"order_id" uuid NOT NULL,
-	"product_id" uuid,
-	"variant_id" uuid,
+	"id" text PRIMARY KEY NOT NULL,
+	"order_id" text NOT NULL,
+	"product_id" text,
+	"variant_id" text,
 	"quantity" integer NOT NULL,
 	"unit_price" numeric(10, 2) NOT NULL,
 	"product_snapshot" jsonb NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "orders" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" text PRIMARY KEY NOT NULL,
 	"user_id" text NOT NULL,
 	"status" "order_status_enum" DEFAULT 'pending' NOT NULL,
 	"subtotal_amount" numeric(10, 2) NOT NULL,
@@ -145,10 +145,10 @@ CREATE TABLE "orders" (
 	"tax_amount" numeric(10, 2) DEFAULT '0' NOT NULL,
 	"discount_amount" numeric(10, 2) DEFAULT '0' NOT NULL,
 	"total_amount" numeric(10, 2) NOT NULL,
-	"coupon_id" uuid,
-	"shipping_address_id" uuid,
+	"coupon_id" text,
+	"shipping_address_id" text,
 	"shipping_address" jsonb NOT NULL,
-	"payment_method_id" uuid,
+	"payment_method_id" text,
 	"stripe_payment_intent_id" text,
 	"stripe_charge_id" text,
 	"created_at" timestamp DEFAULT now() NOT NULL,
@@ -157,7 +157,7 @@ CREATE TABLE "orders" (
 );
 --> statement-breakpoint
 CREATE TABLE "payment_methods" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" text PRIMARY KEY NOT NULL,
 	"user_id" text NOT NULL,
 	"stripe_payment_method_id" text NOT NULL,
 	"type" "payment_method_type_enum" NOT NULL,
@@ -173,8 +173,8 @@ CREATE TABLE "payment_methods" (
 --> statement-breakpoint
 CREATE TABLE "product_images" (
 	"id" text PRIMARY KEY NOT NULL,
-	"product_id" uuid NOT NULL,
-	"variant_id" uuid,
+	"product_id" text NOT NULL,
+	"variant_id" text,
 	"url" text NOT NULL,
 	"alt_text" varchar(255),
 	"position" smallint DEFAULT 1 NOT NULL,
@@ -182,10 +182,10 @@ CREATE TABLE "product_images" (
 );
 --> statement-breakpoint
 CREATE TABLE "product_reviews" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"product_id" uuid NOT NULL,
+	"id" text PRIMARY KEY NOT NULL,
+	"product_id" text NOT NULL,
 	"user_id" text NOT NULL,
-	"order_id" uuid,
+	"order_id" text,
 	"rating" smallint NOT NULL,
 	"title" varchar(120),
 	"body" text,
@@ -196,8 +196,8 @@ CREATE TABLE "product_reviews" (
 );
 --> statement-breakpoint
 CREATE TABLE "product_variants" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"product_id" uuid NOT NULL,
+	"id" text PRIMARY KEY NOT NULL,
+	"product_id" text NOT NULL,
 	"sku" varchar(100) NOT NULL,
 	"price" numeric(10, 2),
 	"stock" integer DEFAULT 0 NOT NULL,
@@ -207,13 +207,13 @@ CREATE TABLE "product_variants" (
 );
 --> statement-breakpoint
 CREATE TABLE "products" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" text PRIMARY KEY NOT NULL,
 	"name" varchar(255) NOT NULL,
 	"slug" varchar(280) NOT NULL,
 	"description" text,
 	"base_price" numeric(10, 2) NOT NULL,
 	"original_price" numeric(10, 2),
-	"category_id" uuid,
+	"category_id" text,
 	"gender" "product_gender_enum" NOT NULL,
 	"status" "product_status_enum" DEFAULT 'draft' NOT NULL,
 	"free_shipping" boolean DEFAULT false NOT NULL,
@@ -228,7 +228,7 @@ CREATE TABLE "products" (
 );
 --> statement-breakpoint
 CREATE TABLE "user_addresses" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" text PRIMARY KEY NOT NULL,
 	"user_id" text NOT NULL,
 	"label" varchar(50),
 	"recipient_name" varchar(150) NOT NULL,
@@ -243,7 +243,7 @@ CREATE TABLE "user_addresses" (
 );
 --> statement-breakpoint
 CREATE TABLE "user_profiles" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" text PRIMARY KEY NOT NULL,
 	"user_id" text NOT NULL,
 	"phone" text,
 	"avatar_url" text,
@@ -256,14 +256,14 @@ CREATE TABLE "user_profiles" (
 );
 --> statement-breakpoint
 CREATE TABLE "wishlist_items" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"wishlist_id" uuid NOT NULL,
-	"product_id" uuid NOT NULL,
+	"id" text PRIMARY KEY NOT NULL,
+	"wishlist_id" text NOT NULL,
+	"product_id" text NOT NULL,
 	"added_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "wishlists" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" text PRIMARY KEY NOT NULL,
 	"user_id" text NOT NULL,
 	"name" varchar(100) NOT NULL,
 	"is_default" boolean DEFAULT false NOT NULL,
