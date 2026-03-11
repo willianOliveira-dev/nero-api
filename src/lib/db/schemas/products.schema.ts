@@ -28,7 +28,6 @@ import {
     text,
     timestamp,
     uniqueIndex,
-    uuid,
     varchar,
 } from 'drizzle-orm/pg-core';
 import { uuidv7 } from 'uuidv7';

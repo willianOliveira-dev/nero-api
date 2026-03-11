@@ -2,7 +2,7 @@ import type { Session, User } from 'better-auth';
 import { fromNodeHeaders } from 'better-auth/node';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import fp from 'fastify-plugin';
-import { auth } from '@/lib/auth';
+import { auth } from '@/lib/auth/auth.lib';
 import { UnauthorizedError } from '@/shared/errors/app.error';
 
 declare module 'fastify' {
