@@ -1,0 +1,29 @@
+import type { RouteHandler } from 'fastify';
+import type {
+    AddCartItemInput,
+    ApplyCouponInput,
+    CartItemParams,
+    UpdateCartItemInput,
+} from '../../modules/cart/validations/cart.validation';
+
+type ZodHandler<
+    TParams = unknown,
+    TBody = unknown,
+    TQuery = unknown,
+> = RouteHandler<{
+    Params: TParams;
+    Body: TBody;
+    Querystring: TQuery;
+}>;
+
+export type GetCartHandler = ZodHandler;
+export type ClearCartHandler = ZodHandler;
+export type AddCartItemHandler = ZodHandler<unknown, AddCartItemInput>;
+export type UpdateCartItemHandler = ZodHandler<
+    CartItemParams,
+    UpdateCartItemInput
+>;
+export type RemoveCartItemHandler = ZodHandler<CartItemParams>;
+export type ApplyCouponHandler = ZodHandler<unknown, ApplyCouponInput>;
+export type RemoveCouponHandler = ZodHandler;
+export type ValidateCouponHandler = ZodHandler<{ code: string }>;
