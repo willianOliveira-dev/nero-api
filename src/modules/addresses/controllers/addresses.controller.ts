@@ -16,9 +16,7 @@ export class AddressesController {
 
         const addresses = await addressesService.listAddresses(user.id);
 
-        return reply.status(200).send({
-            data: addresses,
-        });
+        return reply.status(200).send(addresses);
     };
 
     getDefault: GetDefaultAddressHandler = async (request, reply) => {
@@ -26,9 +24,7 @@ export class AddressesController {
 
         const address = await addressesService.getDefault(user.id);
 
-        return reply.status(200).send({
-            data: address,
-        });
+        return reply.status(200).send(address);
     };
 
     create: CreateAddressHandler = async (request, reply) => {
@@ -39,9 +35,7 @@ export class AddressesController {
             request.body,
         );
 
-        return reply.status(201).send({
-            data: address,
-        });
+        return reply.status(201).send(address);
     };
 
     update: UpdateAddressHandler = async (request, reply) => {
@@ -53,9 +47,7 @@ export class AddressesController {
             request.body,
         );
 
-        return reply.status(200).send({
-            data: address,
-        });
+        return reply.status(200).send(address);
     };
 
     setDefault: SetDefaultAddressHandler = async (request, reply) => {
@@ -66,9 +58,7 @@ export class AddressesController {
             user.id,
         );
 
-        return reply.status(200).send({
-            data: address,
-        });
+        return reply.status(200).send(address);
     };
 
     delete: DeleteAddressHandler = async (request, reply) => {
@@ -79,8 +69,6 @@ export class AddressesController {
             user.id,
         );
 
-        return reply.status(200).send({
-            data: result,
-        });
+        return reply.status(200).send(result);
     };
 }

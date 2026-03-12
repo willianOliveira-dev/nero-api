@@ -15,13 +15,7 @@ export class OrdersController {
             request.session.user.id,
             request.query,
         );
-        return reply.status(200).send({
-            data: result.data,
-            meta: {
-                hasMore: result.hasMore,
-                nextCursor: result.nextCursor,
-            },
-        });
+        return reply.status(200).send(result);
     };
 
     getById: GetOrderHandler = async (request, reply) => {
@@ -29,7 +23,7 @@ export class OrdersController {
             request.params.id,
             request.session.user.id,
         );
-        return reply.status(200).send({ data: order });
+        return reply.status(200).send(order);
     };
 
     cancel: CancelOrderHandler = async (request, reply) => {
@@ -37,18 +31,12 @@ export class OrdersController {
             request.params.id,
             request.session.user.id,
         );
-        return reply.status(200).send({ data: order });
+        return reply.status(200).send(order);
     };
 
     listAll: ListAllOrdersHandler = async (request, reply) => {
         const result = await ordersService.listAllOrders(request.query);
-        return reply.status(200).send({
-            data: result.data,
-            meta: {
-                hasMore: result.hasMore,
-                nextCursor: result.nextCursor,
-            },
-        });
+        return reply.status(200).send(result);
     };
 
     updateStatus: UpdateOrderStatusHandler = async (request, reply) => {
@@ -56,6 +44,6 @@ export class OrdersController {
             request.params.id,
             request.body,
         );
-        return reply.status(200).send({ data: order });
+        return reply.status(200).send(order);
     };
 }

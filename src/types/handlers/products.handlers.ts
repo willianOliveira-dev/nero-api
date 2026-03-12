@@ -25,13 +25,11 @@ export type SearchProductsHandler = ZodHandler<
     unknown,
     SearchProductsInput,
     {
-        data: SerializedProduct[];
-        meta: {
-            total: number;
-            nextCursor: string | null;
-            hasMore: boolean;
-            limit: number;
-        };
+        items: SerializedProduct[];
+        total: number;
+        nextCursor: string | null;
+        hasMore: boolean;
+        limit: number;
     }
 >;
 
@@ -39,96 +37,87 @@ export type GetProductByIdHandler = ZodHandler<
     ProductParams,
     unknown,
     unknown,
-    { data: SerializedProduct }
+    SerializedProduct
 >;
 
 export type GetProductBySlugHandler = ZodHandler<
     ProductSlugParams,
     unknown,
     unknown,
-    { data: SerializedProduct }
+    SerializedProduct
 >;
 
 export type CreateProductHandler = ZodHandler<
     unknown,
     CreateProductInput,
     unknown,
-    { data: SerializedProduct }
+    SerializedProduct
 >;
 
 export type UpdateProductHandler = ZodHandler<
     ProductParams,
     UpdateProductInput,
     unknown,
-    { data: SerializedProduct }
+    SerializedProduct
 >;
 
 export type ArchiveProductHandler = ZodHandler<
     ProductParams,
     unknown,
     unknown,
-    { data: SerializedProduct }
+    SerializedProduct
 >;
 
 export type ListVariantsHandler = ZodHandler<
     ProductParams,
     unknown,
     unknown,
-    { data: SerializedVariant[] }
+    SerializedVariant[]
 >;
 
 export type CreateVariantHandler = ZodHandler<
     ProductParams,
     CreateVariantInput,
     unknown,
-    { data: SerializedVariant }
+    SerializedVariant
 >;
 
 export type UpdateVariantHandler = ZodHandler<
     VariantParams,
     UpdateVariantInput,
     unknown,
-    { data: SerializedVariant }
+    SerializedVariant
 >;
 
 export type ListImagesHandler = ZodHandler<
     ProductParams,
-    unknown,
-    unknown,
-    { data: unknown[] }
+    unknown
 >;
 
 export type PresignImageHandler = ZodHandler<
-    ProductParams,
-    unknown,
-    unknown,
-    { data: unknown }
+    ProductParams
 >;
 
 export type ConfirmImageHandler = ZodHandler<
     ProductParams,
-    ConfirmProductImageInput,
-    unknown,
-    { data: unknown }
+    ConfirmProductImageInput
 >;
 
 export type UpdateImageHandler = ZodHandler<
     ImageParams,
-    UpdateProductImageInput,
-    unknown,
-    { data: unknown }
+    UpdateProductImageInput
 >;
 
 export type DeleteImageHandler = ZodHandler<
     ImageParams,
     unknown,
     unknown,
-    { data: { deleted: boolean } }
+    { deleted: boolean }
 >;
 
 export type ReorderImagesHandler = ZodHandler<
     ProductParams,
     ReorderImagesInput,
     unknown,
-    { data: { reordered: boolean } }
+    { reordered: boolean }
 >;

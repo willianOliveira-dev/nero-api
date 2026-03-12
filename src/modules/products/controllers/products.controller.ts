@@ -30,14 +30,11 @@ export class ProductsController {
         const result = await productsService.search(request.query);
 
         const response = {
-            data: serializeProductList(result.data),
-
-            meta: {
-                total: result.total,
-                nextCursor: result.nextCursor,
-                hasMore: result.hasMore,
-                limit: request.query.limit,
-            },
+            items: serializeProductList(result.data),
+            total: result.total,
+            nextCursor: result.nextCursor,
+            hasMore: result.hasMore,
+            limit: request.query.limit,
         };
 
         return reply.status(200).send(response);
@@ -46,25 +43,19 @@ export class ProductsController {
     getById: GetProductByIdHandler = async (request, reply) => {
         const product = await productsService.getById(request.params.id);
 
-        return reply.status(200).send({
-            data: serializeProduct(product),
-        });
+        return reply.status(200).send(serializeProduct(product));
     };
 
     getBySlug: GetProductBySlugHandler = async (request, reply) => {
         const product = await productsService.getBySlug(request.params.slug);
 
-        return reply.status(200).send({
-            data: serializeProduct(product),
-        });
+        return reply.status(200).send(serializeProduct(product));
     };
 
     create: CreateProductHandler = async (request, reply) => {
         const product = await productsService.create(request.body);
 
-        return reply.status(201).send({
-            data: serializeProduct(product),
-        });
+        return reply.status(201).send(serializeProduct(product));
     };
 
     update: UpdateProductHandler = async (request, reply) => {
@@ -73,25 +64,19 @@ export class ProductsController {
             request.body,
         );
 
-        return reply.status(200).send({
-            data: serializeProduct(product),
-        });
+        return reply.status(200).send(serializeProduct(product));
     };
 
     archive: ArchiveProductHandler = async (request, reply) => {
         const product = await productsService.archive(request.params.id);
 
-        return reply.status(200).send({
-            data: serializeProduct(product),
-        });
+        return reply.status(200).send(serializeProduct(product));
     };
 
     listVariants: ListVariantsHandler = async (request, reply) => {
         const variants = await productsService.listVariants(request.params.id);
 
-        return reply.status(200).send({
-            data: variants.map(serializeVariant),
-        });
+        return reply.status(200).send(variants.map(serializeVariant));
     };
 
     createVariant: CreateVariantHandler = async (request, reply) => {
@@ -100,9 +85,7 @@ export class ProductsController {
             request.body,
         );
 
-        return reply.status(201).send({
-            data: serializeVariant(variant),
-        });
+        return reply.status(201).send(serializeVariant(variant));
     };
 
     updateVariant: UpdateVariantHandler = async (request, reply) => {
@@ -112,25 +95,19 @@ export class ProductsController {
             request.body,
         );
 
-        return reply.status(200).send({
-            data: serializeVariant(variant),
-        });
+        return reply.status(200).send(serializeVariant(variant));
     };
 
     listImages: ListImagesHandler = async (request, reply) => {
         const images = await productsService.listImages(request.params.id);
 
-        return reply.status(200).send({
-            data: images,
-        });
+        return reply.status(200).send(images);
     };
 
     presignImage: PresignImageHandler = async (request, reply) => {
         const result = await productsService.presignImage(request.params.id);
 
-        return reply.status(200).send({
-            data: result,
-        });
+        return reply.status(200).send(result);
     };
 
     confirmImage: ConfirmImageHandler = async (request, reply) => {
@@ -139,9 +116,7 @@ export class ProductsController {
             request.body,
         );
 
-        return reply.status(201).send({
-            data: image,
-        });
+        return reply.status(201).send(image);
     };
 
     updateImage: UpdateImageHandler = async (request, reply) => {
@@ -151,9 +126,7 @@ export class ProductsController {
             request.body,
         );
 
-        return reply.status(200).send({
-            data: image,
-        });
+        return reply.status(200).send(image);
     };
 
     deleteImage: DeleteImageHandler = async (request, reply) => {
@@ -162,9 +135,7 @@ export class ProductsController {
             request.params.iid,
         );
 
-        return reply.status(200).send({
-            data: result,
-        });
+        return reply.status(200).send(result);
     };
 
     reorderImages: ReorderImagesHandler = async (request, reply) => {
@@ -173,8 +144,6 @@ export class ProductsController {
             request.body,
         );
 
-        return reply.status(200).send({
-            data: result,
-        });
+        return reply.status(200).send(result);
     };
 }

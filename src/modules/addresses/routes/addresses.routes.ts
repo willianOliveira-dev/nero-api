@@ -33,7 +33,7 @@ export const addressesRoutes: FastifyPluginAsyncZod = async (app) => {
             summary: 'Listar endereços do usuário',
             operationId: 'listAddresses',
             response: {
-                200: z.object({ data: z.array(addressResponseSchema) }),
+                200: z.array(addressResponseSchema),
             },
         },
         handler: controller.list,
@@ -45,7 +45,7 @@ export const addressesRoutes: FastifyPluginAsyncZod = async (app) => {
             summary: 'Retornar endereço padrão',
             operationId: 'getDefaultAddress',
             response: {
-                200: z.object({ data: addressResponseSchema }),
+                200: addressResponseSchema,
             },
         },
         handler: controller.getDefault,
@@ -58,7 +58,7 @@ export const addressesRoutes: FastifyPluginAsyncZod = async (app) => {
             operationId: 'createAddress',
             body: createAddressSchema,
             response: {
-                201: z.object({ data: addressResponseSchema }),
+                201: addressResponseSchema,
             },
         },
         handler: controller.create,
@@ -72,7 +72,7 @@ export const addressesRoutes: FastifyPluginAsyncZod = async (app) => {
             params: addressParamsSchema,
             body: updateAddressSchema,
             response: {
-                200: z.object({ data: addressResponseSchema }),
+                200: addressResponseSchema,
             },
         },
         handler: controller.update,
@@ -85,7 +85,7 @@ export const addressesRoutes: FastifyPluginAsyncZod = async (app) => {
             operationId: 'setDefaultAddress',
             params: addressParamsSchema,
             response: {
-                200: z.object({ data: addressResponseSchema }),
+                200: addressResponseSchema,
             },
         },
         handler: controller.setDefault,
@@ -98,7 +98,7 @@ export const addressesRoutes: FastifyPluginAsyncZod = async (app) => {
             operationId: 'deleteAddress',
             params: addressParamsSchema,
             response: {
-                200: z.object({ data: z.object({ deleted: z.boolean() }) }),
+                200: z.object({ deleted: z.boolean() }),
             },
         },
         handler: controller.delete,

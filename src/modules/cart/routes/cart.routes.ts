@@ -66,7 +66,7 @@ export const cartRoutes: FastifyPluginAsyncZod = async (app) => {
             tags: ['Cart'],
             summary: 'Retornar carrinho do usuário',
             operationId: 'getCart',
-            response: { 200: z.object({ data: cartResponseSchema }) },
+            response: { 200: cartResponseSchema },
         },
         handler: controller.getCart,
     });
@@ -77,7 +77,7 @@ export const cartRoutes: FastifyPluginAsyncZod = async (app) => {
             summary: 'Adicionar item ao carrinho',
             operationId: 'addCartItem',
             body: addCartItemSchema,
-            response: { 200: z.object({ data: cartResponseSchema }) },
+            response: { 200: cartResponseSchema },
         },
         handler: controller.addItem,
     });
@@ -89,7 +89,7 @@ export const cartRoutes: FastifyPluginAsyncZod = async (app) => {
             operationId: 'updateCartItem',
             params: cartItemParamsSchema,
             body: updateCartItemSchema,
-            response: { 200: z.object({ data: cartResponseSchema }) },
+            response: { 200: cartResponseSchema },
         },
         handler: controller.updateItem,
     });
@@ -100,7 +100,7 @@ export const cartRoutes: FastifyPluginAsyncZod = async (app) => {
             summary: 'Remover item do carrinho',
             operationId: 'removeCartItem',
             params: cartItemParamsSchema,
-            response: { 200: z.object({ data: cartResponseSchema }) },
+            response: { 200: cartResponseSchema },
         },
         handler: controller.removeItem,
     });
@@ -111,7 +111,7 @@ export const cartRoutes: FastifyPluginAsyncZod = async (app) => {
             summary: 'Aplicar cupom de desconto',
             operationId: 'applyCoupon',
             body: applyCouponSchema,
-            response: { 200: z.object({ data: cartResponseSchema }) },
+            response: { 200: cartResponseSchema },
         },
         handler: controller.applyCoupon,
     });
@@ -121,7 +121,7 @@ export const cartRoutes: FastifyPluginAsyncZod = async (app) => {
             tags: ['Cart'],
             summary: 'Remover cupom',
             operationId: 'removeCoupon',
-            response: { 200: z.object({ data: cartResponseSchema }) },
+            response: { 200: cartResponseSchema },
         },
         handler: controller.removeCoupon,
     });
@@ -134,11 +134,9 @@ export const cartRoutes: FastifyPluginAsyncZod = async (app) => {
             params: couponCodeParamsSchema,
             response: {
                 200: z.object({
-                    data: z.object({
-                        code: z.string(),
-                        type: z.string(),
-                        discount: priceOutputSchema,
-                    }),
+                    code: z.string(),
+                    type: z.string(),
+                    discount: priceOutputSchema,
                 }),
             },
         },
@@ -151,7 +149,7 @@ export const cartRoutes: FastifyPluginAsyncZod = async (app) => {
             summary: 'Limpar carrinho',
             operationId: 'clearCart',
             response: {
-                200: z.object({ data: z.object({ cleared: z.boolean() }) }),
+                200: z.object({ cleared: z.boolean() }),
             },
         },
         handler: controller.clearCart,

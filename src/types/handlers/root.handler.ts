@@ -4,7 +4,7 @@ export type ZodHandler<
   TParams = unknown,
   TBody = unknown,
   TQuery = unknown,
-  TReply = unknown,
+  TReply = any,
 > = RouteHandler<{
   Params: TParams;
   Body: TBody;

@@ -15,7 +15,7 @@ const cartService = new CartService();
 export class CartController {
     getCart: GetCartHandler = async (request, reply) => {
         const cart = await cartService.getCart(request.session.user.id);
-        return reply.status(200).send({ data: cart });
+        return reply.status(200).send(cart);
     };
 
     addItem: AddCartItemHandler = async (request, reply) => {
@@ -23,7 +23,7 @@ export class CartController {
             request.session.user.id,
             request.body,
         );
-        return reply.status(200).send({ data: cart });
+        return reply.status(200).send(cart);
     };
 
     updateItem: UpdateCartItemHandler = async (request, reply) => {
@@ -32,7 +32,7 @@ export class CartController {
             request.params.itemId,
             request.body,
         );
-        return reply.status(200).send({ data: cart });
+        return reply.status(200).send(cart);
     };
 
     removeItem: RemoveCartItemHandler = async (request, reply) => {
@@ -40,7 +40,7 @@ export class CartController {
             request.session.user.id,
             request.params.itemId,
         );
-        return reply.status(200).send({ data: cart });
+        return reply.status(200).send(cart);
     };
 
     applyCoupon: ApplyCouponHandler = async (request, reply) => {
@@ -48,12 +48,12 @@ export class CartController {
             request.session.user.id,
             request.body.code,
         );
-        return reply.status(200).send({ data: cart });
+        return reply.status(200).send(cart);
     };
 
     removeCoupon: RemoveCouponHandler = async (request, reply) => {
         const cart = await cartService.removeCoupon(request.session.user.id);
-        return reply.status(200).send({ data: cart });
+        return reply.status(200).send(cart);
     };
 
     validateCoupon: ValidateCouponHandler = async (request, reply) => {
@@ -61,11 +61,11 @@ export class CartController {
             request.params.code,
             request.session.user.id,
         );
-        return reply.status(200).send({ data: result });
+        return reply.status(200).send(result);
     };
 
     clearCart: ClearCartHandler = async (request, reply) => {
         await cartService.clearCart(request.session.user.id);
-        return reply.status(200).send({ data: { cleared: true } });
+        return reply.status(200).send({ cleared: true });
     };
 }

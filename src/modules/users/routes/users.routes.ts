@@ -16,17 +16,15 @@ export const usersRoutes: FastifyPluginAsyncZod = async (app) => {
             operationId: 'getMe',
             response: {
                 200: z.object({
-                    data: z.object({
-                        id: z.string(),
-                        name: z.string(),
-                        email: z.string().email(),
-                        avatarUrl: z.string().url().nullable(),
-                        phone: z.string().nullable(),
-                        genderPreference: z
-                            .enum(['men', 'women', 'kids', 'unisex'])
-                            .nullable(),
-                        createdAt: z.date(),
-                    }),
+                    id: z.string(),
+                    name: z.string(),
+                    email: z.string().email(),
+                    avatarUrl: z.string().url().nullable(),
+                    phone: z.string().nullable(),
+                    genderPreference: z
+                        .enum(['men', 'women', 'kids', 'unisex'])
+                        .nullable(),
+                    createdAt: z.date(),
                 }),
             },
         },
@@ -42,14 +40,12 @@ export const usersRoutes: FastifyPluginAsyncZod = async (app) => {
             body: updateProfileSchema,
             response: {
                 200: z.object({
-                    data: z.object({
-                        id: z.string(),
-                        phone: z.string().nullable(),
-                        genderPreference: z
-                            .enum(['men', 'women', 'kids', 'unisex'])
-                            .nullable(),
-                        updatedAt: z.date(),
-                    }),
+                    id: z.string(),
+                    phone: z.string().nullable(),
+                    genderPreference: z
+                        .enum(['men', 'women', 'kids', 'unisex'])
+                        .nullable(),
+                    updatedAt: z.date(),
                 }),
             },
         },
@@ -64,14 +60,12 @@ export const usersRoutes: FastifyPluginAsyncZod = async (app) => {
             operationId: 'presignAvatar',
             response: {
                 200: z.object({
-                    data: z.object({
-                        signature: z.string(),
-                        timestamp: z.number(),
-                        folder: z.string(),
-                        publicId: z.string().optional(),
-                        cloudName: z.string(),
-                        apiKey: z.string(),
-                    }),
+                    signature: z.string(),
+                    timestamp: z.number(),
+                    folder: z.string(),
+                    publicId: z.string().optional(),
+                    cloudName: z.string(),
+                    apiKey: z.string(),
                 }),
             },
         },
@@ -89,9 +83,7 @@ export const usersRoutes: FastifyPluginAsyncZod = async (app) => {
             }),
             response: {
                 200: z.object({
-                    data: z.object({
-                        avatarUrl: z.string().url().nullable(),
-                    }),
+                    avatarUrl: z.string().url().nullable(),
                 }),
             },
         },
@@ -106,9 +98,7 @@ export const usersRoutes: FastifyPluginAsyncZod = async (app) => {
             operationId: 'removeAvatar',
             response: {
                 200: z.object({
-                    data: z.object({
-                        avatarUrl: z.null(),
-                    }),
+                    avatarUrl: z.null(),
                 }),
             },
         },

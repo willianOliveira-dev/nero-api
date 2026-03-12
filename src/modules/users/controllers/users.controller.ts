@@ -20,9 +20,7 @@ export class UsersController {
             image: user.image,
         });
 
-        return reply.status(200).send({
-            data: profile,
-        });
+        return reply.status(200).send(profile);
     };
 
     updateMe: UpdateMeHandler = async (request, reply) => {
@@ -30,9 +28,7 @@ export class UsersController {
 
         const updated = await usersService.updateMe(user.id, request.body);
 
-        return reply.status(200).send({
-            data: updated,
-        });
+        return reply.status(200).send(updated);
     };
 
     presignAvatar: PresignAvatarHandler = async (request, reply) => {
@@ -40,9 +36,7 @@ export class UsersController {
 
         const result = await usersService.getAvatarUploadSignature(user.id);
 
-        return reply.status(200).send({
-            data: result,
-        });
+        return reply.status(200).send(result);
     };
 
     confirmAvatar: ConfirmAvatarHandler = async (request, reply) => {
@@ -53,9 +47,7 @@ export class UsersController {
             request.body.avatarUrl,
         );
 
-        return reply.status(200).send({
-            data: result,
-        });
+        return reply.status(200).send(result);
     };
 
     removeAvatar: RemoveAvatarHandler = async (request, reply) => {
@@ -63,8 +55,6 @@ export class UsersController {
 
         const result = await usersService.removeAvatar(user.id);
 
-        return reply.status(200).send({
-            data: result,
-        });
+        return reply.status(200).send(result);
     };
 }
