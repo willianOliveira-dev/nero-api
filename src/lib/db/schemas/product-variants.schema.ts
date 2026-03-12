@@ -30,7 +30,7 @@ import { products } from './products.schema';
 
 // ── Types para o JSONB de atributos ──────────────────────────
 export type VariantAttributes = {
-    size?: string; // "S" | "M" | "L" | "XL" | "2XL"
+    size?: string; // "P" | "M" | "G" | "GG" | "XGG"
     color?: string; // "Lemon" | "Black" | "Sage Green"
     hexColor?: string; // "#F5C518" — para renderizar o swatch
     [key: string]: string | undefined; // extensível para futuros atributos
