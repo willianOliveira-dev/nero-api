@@ -21,6 +21,8 @@ export const envSchema = z.object({
         .transform((val) => val.split(',').map((origin) => origin.trim())),
     GOOGLE_CLIENT_ID: z.string(),
     GOOGLE_CLIENT_SECRET: z.string(),
+    PRICE_LOCALE: z.string().default('pt-BR'),
+    PRICE_CURRENCY: z.string().default('BRL'),
 });
 
 export type Env = z.infer<typeof envSchema>;

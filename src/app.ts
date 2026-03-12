@@ -6,7 +6,7 @@ import {
 } from 'fastify-type-provider-zod';
 import { env } from '@/config/env';
 import { registerPlugins } from '@/plugins/index.plugin';
-import { registerRoutes } from './routes/root.routes';
+import { registerAppRouter } from './routes/root.routes';
 
 export async function boostrap() {
     const app = Fastify({
@@ -32,7 +32,7 @@ export async function boostrap() {
     app.setSerializerCompiler(serializerCompiler);
 
     await registerPlugins(app);
-    await registerRoutes(app);
+    await registerAppRouter(app);
 
     return app;
 }
