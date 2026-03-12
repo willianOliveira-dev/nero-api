@@ -1,36 +1,32 @@
-import type { RouteHandler } from 'fastify';
+import type { ZodHandler } from '@/types/handlers/root.handler';
 
 import type {
-    CreateCategoryInput,
-    ReorderCategoriesInput,
-    UpdateCategoryInput,
+  CreateCategoryInput,
+  ReorderCategoriesInput,
+  UpdateCategoryInput,
 } from '../../modules/categories/validations/categories.validation';
 
-export type ListCategoriesHandler = RouteHandler;
+export type ListCategoriesHandler = ZodHandler;
 
-export type GetCategoryBySlugHandler = RouteHandler<{
-    Params: {
-        slug: string;
-    };
-}>;
+export type GetCategoryBySlugHandler = ZodHandler<
+  { slug: string }
+>;
 
-export type CreateCategoryHandler = RouteHandler<{
-    Body: CreateCategoryInput;
-}>;
+export type CreateCategoryHandler = ZodHandler<
+  unknown,
+  CreateCategoryInput
+>;
 
-export type UpdateCategoryHandler = RouteHandler<{
-    Params: {
-        id: string;
-    };
-    Body: UpdateCategoryInput;
-}>;
+export type UpdateCategoryHandler = ZodHandler<
+  { id: string },
+  UpdateCategoryInput
+>;
 
-export type DeactivateCategoryHandler = RouteHandler<{
-    Params: {
-        id: string;
-    };
-}>;
+export type DeactivateCategoryHandler = ZodHandler<
+  { id: string }
+>;
 
-export type ReorderCategoriesHandler = RouteHandler<{
-    Body: ReorderCategoriesInput;
-}>;
+export type ReorderCategoriesHandler = ZodHandler<
+  unknown,
+  ReorderCategoriesInput
+>;

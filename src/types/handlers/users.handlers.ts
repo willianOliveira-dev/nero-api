@@ -1,18 +1,18 @@
-import type { RouteHandler } from 'fastify';
+import type { ZodHandler } from '@/types/handlers/root.handler';
 import type { UpdateProfileInput } from '../../modules/users/validations/users.validation';
 
-export type GetMeHandler = RouteHandler;
+export type GetMeHandler = ZodHandler;
 
-export type UpdateMeHandler = RouteHandler<{
-    Body: UpdateProfileInput;
-}>;
+export type UpdateMeHandler = ZodHandler<
+  unknown,
+  UpdateProfileInput
+>;
 
-export type PresignAvatarHandler = RouteHandler;
+export type PresignAvatarHandler = ZodHandler;
 
-export type ConfirmAvatarHandler = RouteHandler<{
-    Body: {
-        avatarUrl: string;
-    };
-}>;
+export type ConfirmAvatarHandler = ZodHandler<
+  unknown,
+  { avatarUrl: string }
+>;
 
-export type RemoveAvatarHandler = RouteHandler;
+export type RemoveAvatarHandler = ZodHandler;

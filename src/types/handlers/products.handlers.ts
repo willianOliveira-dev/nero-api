@@ -1,8 +1,10 @@
-import type { RouteHandler } from 'fastify';
+import type { ZodHandler } from '@/types/handlers/root.handler';
+
 import type {
     SerializedProduct,
     SerializedVariant,
 } from '../../modules/products/serializers/products.serializer';
+
 import type {
     ConfirmProductImageInput,
     CreateProductInput,
@@ -18,9 +20,11 @@ import type {
     VariantParams,
 } from '../../modules/products/validations/products.validation';
 
-export type SearchProductsHandler = RouteHandler<{
-    Querystring: SearchProductsInput;
-    Reply: {
+export type SearchProductsHandler = ZodHandler<
+    unknown,
+    unknown,
+    SearchProductsInput,
+    {
         data: SerializedProduct[];
         meta: {
             total: number;
@@ -28,81 +32,103 @@ export type SearchProductsHandler = RouteHandler<{
             hasMore: boolean;
             limit: number;
         };
-    };
-}>;
+    }
+>;
 
-export type GetProductByIdHandler = RouteHandler<{
-    Params: ProductParams;
-    Reply: { data: SerializedProduct };
-}>;
+export type GetProductByIdHandler = ZodHandler<
+    ProductParams,
+    unknown,
+    unknown,
+    { data: SerializedProduct }
+>;
 
-export type GetProductBySlugHandler = RouteHandler<{
-    Params: ProductSlugParams;
-    Reply: { data: SerializedProduct };
-}>;
+export type GetProductBySlugHandler = ZodHandler<
+    ProductSlugParams,
+    unknown,
+    unknown,
+    { data: SerializedProduct }
+>;
 
-export type CreateProductHandler = RouteHandler<{
-    Body: CreateProductInput;
-    Reply: { data: SerializedProduct };
-}>;
+export type CreateProductHandler = ZodHandler<
+    unknown,
+    CreateProductInput,
+    unknown,
+    { data: SerializedProduct }
+>;
 
-export type UpdateProductHandler = RouteHandler<{
-    Params: ProductParams;
-    Body: UpdateProductInput;
-    Reply: { data: SerializedProduct };
-}>;
+export type UpdateProductHandler = ZodHandler<
+    ProductParams,
+    UpdateProductInput,
+    unknown,
+    { data: SerializedProduct }
+>;
 
-export type ArchiveProductHandler = RouteHandler<{
-    Params: ProductParams;
-    Reply: { data: SerializedProduct };
-}>;
+export type ArchiveProductHandler = ZodHandler<
+    ProductParams,
+    unknown,
+    unknown,
+    { data: SerializedProduct }
+>;
 
-export type ListVariantsHandler = RouteHandler<{
-    Params: ProductParams;
-    Reply: { data: SerializedVariant[] };
-}>;
+export type ListVariantsHandler = ZodHandler<
+    ProductParams,
+    unknown,
+    unknown,
+    { data: SerializedVariant[] }
+>;
 
-export type CreateVariantHandler = RouteHandler<{
-    Params: ProductParams;
-    Body: CreateVariantInput;
-    Reply: { data: SerializedVariant };
-}>;
+export type CreateVariantHandler = ZodHandler<
+    ProductParams,
+    CreateVariantInput,
+    unknown,
+    { data: SerializedVariant }
+>;
 
-export type UpdateVariantHandler = RouteHandler<{
-    Params: VariantParams;
-    Body: UpdateVariantInput;
-    Reply: { data: SerializedVariant };
-}>;
+export type UpdateVariantHandler = ZodHandler<
+    VariantParams,
+    UpdateVariantInput,
+    unknown,
+    { data: SerializedVariant }
+>;
 
-export type ListImagesHandler = RouteHandler<{
-    Params: ProductParams;
-    Reply: { data: unknown[] };
-}>;
+export type ListImagesHandler = ZodHandler<
+    ProductParams,
+    unknown,
+    unknown,
+    { data: unknown[] }
+>;
 
-export type PresignImageHandler = RouteHandler<{
-    Params: ProductParams;
-    Reply: { data: unknown };
-}>;
+export type PresignImageHandler = ZodHandler<
+    ProductParams,
+    unknown,
+    unknown,
+    { data: unknown }
+>;
 
-export type ConfirmImageHandler = RouteHandler<{
-    Params: ProductParams;
-    Body: ConfirmProductImageInput;
-    Reply: { data: unknown };
-}>;
+export type ConfirmImageHandler = ZodHandler<
+    ProductParams,
+    ConfirmProductImageInput,
+    unknown,
+    { data: unknown }
+>;
 
-export type UpdateImageHandler = RouteHandler<{
-    Params: ImageParams;
-    Body: UpdateProductImageInput;
-    Reply: { data: unknown };
-}>;
+export type UpdateImageHandler = ZodHandler<
+    ImageParams,
+    UpdateProductImageInput,
+    unknown,
+    { data: unknown }
+>;
 
-export type DeleteImageHandler = RouteHandler<{
-    Params: ImageParams;
-    Reply: { data: { deleted: boolean } };
-}>;
+export type DeleteImageHandler = ZodHandler<
+    ImageParams,
+    unknown,
+    unknown,
+    { data: { deleted: boolean } }
+>;
 
-export type ReorderImagesHandler = RouteHandler<{
-    Params: ProductParams;
-    Body: ReorderImagesInput;
-    Reply: { data: { reordered: boolean } };
-}>;
+export type ReorderImagesHandler = ZodHandler<
+    ProductParams,
+    ReorderImagesInput,
+    unknown,
+    { data: { reordered: boolean } }
+>;

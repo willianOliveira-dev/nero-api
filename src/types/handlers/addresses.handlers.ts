@@ -1,33 +1,28 @@
-import type { RouteHandler } from 'fastify';
+import type { ZodHandler } from '@/types/handlers/root.handler';
 
 import type {
-    CreateAddressInput,
-    UpdateAddressInput,
+  CreateAddressInput,
+  UpdateAddressInput,
 } from '../../modules/addresses/validations/addresses.validation';
 
-export type ListAddressesHandler = RouteHandler;
+export type ListAddressesHandler = ZodHandler;
 
-export type GetDefaultAddressHandler = RouteHandler;
+export type GetDefaultAddressHandler = ZodHandler;
 
-export type CreateAddressHandler = RouteHandler<{
-    Body: CreateAddressInput;
-}>;
+export type CreateAddressHandler = ZodHandler<
+  unknown,
+  CreateAddressInput
+>;
 
-export type UpdateAddressHandler = RouteHandler<{
-    Params: {
-        id: string;
-    };
-    Body: UpdateAddressInput;
-}>;
+export type UpdateAddressHandler = ZodHandler<
+  { id: string },
+  UpdateAddressInput
+>;
 
-export type SetDefaultAddressHandler = RouteHandler<{
-    Params: {
-        id: string;
-    };
-}>;
+export type SetDefaultAddressHandler = ZodHandler<
+  { id: string }
+>;
 
-export type DeleteAddressHandler = RouteHandler<{
-    Params: {
-        id: string;
-    };
-}>;
+export type DeleteAddressHandler = ZodHandler<
+  { id: string }
+>;
