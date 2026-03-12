@@ -36,7 +36,9 @@ const categoryResponseSchema = z.object({
 });
 
 export const categoriesRoutes: FastifyPluginAsyncZod = async (app) => {
+
     // ── Rotas públicas ──────────────────────────────────────────
+    
     app.get('/categories', {
         schema: {
             tags: ['Categories'],

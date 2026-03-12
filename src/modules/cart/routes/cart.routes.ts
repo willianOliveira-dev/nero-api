@@ -61,7 +61,6 @@ const cartResponseSchema = z.object({
 export const cartRoutes: FastifyPluginAsyncZod = async (app) => {
     app.addHook('preHandler', app.authenticate);
 
-    // GET /v1/cart
     app.get('/cart', {
         schema: {
             tags: ['Cart'],
@@ -72,7 +71,6 @@ export const cartRoutes: FastifyPluginAsyncZod = async (app) => {
         handler: controller.getCart,
     });
 
-    // POST /v1/cart/items
     app.post('/cart/items', {
         schema: {
             tags: ['Cart'],
@@ -84,7 +82,6 @@ export const cartRoutes: FastifyPluginAsyncZod = async (app) => {
         handler: controller.addItem,
     });
 
-    // PATCH /v1/cart/items/:itemId
     app.patch('/cart/items/:itemId', {
         schema: {
             tags: ['Cart'],
@@ -97,7 +94,6 @@ export const cartRoutes: FastifyPluginAsyncZod = async (app) => {
         handler: controller.updateItem,
     });
 
-    // DELETE /v1/cart/items/:itemId
     app.delete('/cart/items/:itemId', {
         schema: {
             tags: ['Cart'],
@@ -109,7 +105,6 @@ export const cartRoutes: FastifyPluginAsyncZod = async (app) => {
         handler: controller.removeItem,
     });
 
-    // POST /v1/cart/coupon
     app.post('/cart/coupon', {
         schema: {
             tags: ['Cart'],
@@ -121,7 +116,6 @@ export const cartRoutes: FastifyPluginAsyncZod = async (app) => {
         handler: controller.applyCoupon,
     });
 
-    // DELETE /v1/cart/coupon
     app.delete('/cart/coupon', {
         schema: {
             tags: ['Cart'],
@@ -132,7 +126,6 @@ export const cartRoutes: FastifyPluginAsyncZod = async (app) => {
         handler: controller.removeCoupon,
     });
 
-    // GET /v1/coupons/validate/:code
     app.get('/coupons/validate/:code', {
         schema: {
             tags: ['Cart'],
@@ -152,7 +145,6 @@ export const cartRoutes: FastifyPluginAsyncZod = async (app) => {
         handler: controller.validateCoupon,
     });
 
-    // DELETE /v1/cart
     app.delete('/cart', {
         schema: {
             tags: ['Cart'],

@@ -56,8 +56,8 @@ export class StorageService {
                     public_id: publicId,
                     resource_type: 'image',
                     transformation: [
-                        { quality: 'auto', fetch_format: 'auto' }, // webp/avif automático
-                        { width: 1200, crop: 'limit' }, // limita largura máxima
+                        { quality: 'auto', fetch_format: 'auto' },
+                        { width: 1200, crop: 'limit' }, 
                     ],
                 },
                 (error, result) => {

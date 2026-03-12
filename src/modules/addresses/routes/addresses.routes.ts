@@ -27,7 +27,6 @@ const addressResponseSchema = z.object({
 export const addressesRoutes: FastifyPluginAsyncZod = async (app) => {
     app.addHook('preHandler', app.authenticate);
 
-    // ── GET /v1/me/addresses ────────────────────────────────────
     app.get('/me/addresses', {
         schema: {
             tags: ['Addresses'],
@@ -40,8 +39,6 @@ export const addressesRoutes: FastifyPluginAsyncZod = async (app) => {
         handler: controller.list,
     });
 
-    // ── GET /v1/me/addresses/default ────────────────────────────
-    // TODO: Deve ser registrado ANTES de /me/addresses/:id
     app.get('/me/addresses/default', {
         schema: {
             tags: ['Addresses'],
@@ -54,7 +51,6 @@ export const addressesRoutes: FastifyPluginAsyncZod = async (app) => {
         handler: controller.getDefault,
     });
 
-    // ── POST /v1/me/addresses ───────────────────────────────────
     app.post('/me/addresses', {
         schema: {
             tags: ['Addresses'],
@@ -68,7 +64,6 @@ export const addressesRoutes: FastifyPluginAsyncZod = async (app) => {
         handler: controller.create,
     });
 
-    // ── PATCH /v1/me/addresses/:id ──────────────────────────────
     app.patch('/me/addresses/:id', {
         schema: {
             tags: ['Addresses'],
@@ -83,7 +78,6 @@ export const addressesRoutes: FastifyPluginAsyncZod = async (app) => {
         handler: controller.update,
     });
 
-    // ── PATCH /v1/me/addresses/:id/default ─────────────────────
     app.patch('/me/addresses/:id/default', {
         schema: {
             tags: ['Addresses'],
@@ -97,7 +91,6 @@ export const addressesRoutes: FastifyPluginAsyncZod = async (app) => {
         handler: controller.setDefault,
     });
 
-    // ── DELETE /v1/me/addresses/:id ─────────────────────────────
     app.delete('/me/addresses/:id', {
         schema: {
             tags: ['Addresses'],

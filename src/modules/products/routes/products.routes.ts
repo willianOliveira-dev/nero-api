@@ -71,6 +71,7 @@ const productSchema = z.object({
 });
 
 export const productsRoutes: FastifyPluginAsyncZod = async (app) => {
+    
     // ── Rotas públicas ──────────────────────────────────────────
 
     app.get('/products/search', {
