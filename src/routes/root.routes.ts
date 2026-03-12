@@ -4,6 +4,8 @@ import { authRoutes } from '@/modules/auth/routes/auth.routes';
 import { authOpenApiRoutes } from '@/modules/auth/routes/auth-open-api.routes';
 import { cartRoutes } from '@/modules/cart/routes/cart.routes';
 import { categoriesRoutes } from '@/modules/categories/routes/categories.routes';
+import { homeRoutes } from '@/modules/home/routes/home.routes';
+import { ordersRoutes } from '@/modules/orders/routes/orders.routes';
 import { productsRoutes } from '@/modules/products/routes/products.routes';
 import { swaggerRoutes } from '@/modules/swagger/routes/swagger.routes';
 import { usersRoutes } from '@/modules/users/routes/users.routes';
@@ -13,9 +15,11 @@ export async function registerAppRouter(app: FastifyInstance): Promise<void> {
     await app.register(authOpenApiRoutes);
     await app.register(authRoutes);
 
+    await app.register(homeRoutes, { prefix: '/api/v1/' });
     await app.register(usersRoutes, { prefix: '/api/v1/' });
+    await app.register(addressesRoutes, { prefix: '/api/v1/' });
     await app.register(productsRoutes, { prefix: '/api/v1/' });
     await app.register(categoriesRoutes, { prefix: '/api/v1/' });
     await app.register(cartRoutes, { prefix: '/api/v1/' });
-    await app.register(addressesRoutes, { prefix: '/api/v1/' });
+    await app.register(ordersRoutes, { prefix: '/api/v1/' });
 }
