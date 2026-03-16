@@ -11,7 +11,7 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
       new Request(url, {
         method: request.method,
         headers: fromNodeHeaders(request.headers),
-        body: JSON.stringify(request.body) ?? undefined,
+        body: request.method === 'GET' ? null : JSON.stringify(request.body),
       }),
     );
     response.headers.forEach((value, key) => {

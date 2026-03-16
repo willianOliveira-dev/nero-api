@@ -14,7 +14,7 @@ export const envSchema = z.object({
         .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace'])
         .default('info'),
     BETTER_AUTH_SECRET: z.string(),
-    BETTER_AUTH_URL: z.string(),
+    BETTER_AUTH_URL: z.string().default('http://localhost:8000'),
     ALLOWED_ORIGINS: z
         .string()
         .default('http://localhost:3000')
