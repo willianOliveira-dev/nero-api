@@ -1,24 +1,3 @@
-/**
- * index.ts
- * ─────────────────────────────────────────────────────────────
- * Re-exporta todos os schemas e relations.
- * Use este arquivo como ponto de entrada no drizzle.config.ts.
- *
- * Exemplo de drizzle.config.ts:
- *
- *   import { defineConfig } from "drizzle-kit";
- *
- *   export default defineConfig({
- *     schema:    "./src/db/index.ts",
- *     out:       "./src/db/migrations",
- *     dialect:   "postgresql",
- *     dbCredentials: {
- *       url: process.env.DATABASE_URL!,
- *     },
- *   });
- * ─────────────────────────────────────────────────────────────
- */
-
 // ── Relations (Relational Query API) ─────────────────────────
 export * from '../relations';
 export * from './attribute-types.schema';
@@ -26,7 +5,6 @@ export * from './attribute-types.schema';
 export * from './auth.schema';
 // ── Carrinho ──────────────────────────────────────────────────
 export * from './carts.schema';
-
 // ── Catálogo ──────────────────────────────────────────────────
 export * from './categories.schema';
 // ── Promoções ─────────────────────────────────────────────────

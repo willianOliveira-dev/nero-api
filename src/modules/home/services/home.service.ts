@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, isNotNull } from 'drizzle-orm';
+import { and, desc, eq, gte, isNotNull, type SQL } from 'drizzle-orm';
 import { db } from '@/lib/db/connection';
 import { productImages, products } from '@/lib/db/schemas/index.schema';
 import { NotFoundError } from '@/shared/errors/app.error';
@@ -7,59 +7,38 @@ import { HomeRepository } from '../repositories/home.repository';
 import type {
     CreateHomeSectionInput,
     ReorderHomeSectionsInput,
+    SectionType,
     UpdateHomeSectionInput,
 } from '../validations/home.validation';
 
 const homeRepository = new HomeRepository();
 
 type SectionFilterJson = {
-    sort?: 'recommended' | 'newest' | 'price_asc' | 'price_desc';
     gender?: 'men' | 'women' | 'kids' | 'unisex';
-    deals?: 'on_sale' | 'free_shipping';
     limit?: number;
     daysAgo?: number;
 };
 
+type RawSection = Awaited<ReturnType<HomeRepository['findAllActive']>>[number];
+
 export class HomeService {
-    /**
-     * Retorna todas as seções ativas com seus dados resolvidos.
-     * Cada seção product_list executa sua query de produtos em paralelo.
-     */
     async getHome() {
         const sections = await homeRepository.findAllActive();
 
         const resolved = await Promise.all(
-            sections.map(async (section) => {
-                if (section.type === 'product_list') {
-                    const items = await this.resolveProductList(
-                        section.filterJson as SectionFilterJson | null,
-                    );
-                    return { ...section, items };
-                }
-                return { ...section, items: [] };
-            }),
+            sections.map((section) => this.resolveSection(section)),
         );
 
         return resolved;
     }
 
-    /**
-     * Retorna uma seção específica pelo slug com seus dados resolvidos.
-     */
     async getSectionBySlug(slug: string) {
         const section = await homeRepository.findBySlug(slug);
         if (!section) {
             throw new NotFoundError('Seção não encontrada.');
         }
 
-        if (section.type === 'product_list') {
-            const items = await this.resolveProductList(
-                section.filterJson as SectionFilterJson | null,
-            );
-            return { ...section, items };
-        }
-
-        return { ...section, items: [] };
+        return this.resolveSection(section);
     }
 
     async listAll() {
@@ -99,43 +78,80 @@ export class HomeService {
     }
 
     /**
-     * Executa a query de produtos de uma seção usando o filterJson.
-     * Retorna produtos serializados com preço formatado.
+     * Resolve o conteúdo de uma seção baseado no seu type.
+     * category_list e banner retornam items vazio por ora.
      */
-    private async resolveProductList(filter: SectionFilterJson | null) {
-        const {
-            sort = 'recommended',
-            gender,
-            deals,
-            limit = 10,
-            daysAgo,
-        } = filter ?? {};
+    private async resolveSection(section: RawSection) {
+        const type = section.type as SectionType;
+        const filter = (section.filterJson ?? {}) as SectionFilterJson;
 
-        const conditions = [eq(products.status, 'active')];
+        const productListTypes: SectionType[] = [
+            'top_selling',
+            'new_in',
+            'on_sale',
+            'free_shipping',
+            'by_gender',
+        ];
 
-        if (gender) {
-            conditions.push(eq(products.gender, gender));
+        if (productListTypes.includes(type)) {
+            const items = await this.resolveProductList(type, filter);
+            return { ...section, items };
         }
 
-        if (deals === 'on_sale') {
-            conditions.push(isNotNull(products.originalPrice));
-        }
-        if (deals === 'free_shipping') {
-            conditions.push(eq(products.freeShipping, true));
-        }
+        return { ...section, items: [] };
+    }
 
-        if (daysAgo) {
-            const since = new Date();
-            since.setDate(since.getDate() - daysAgo);
-            conditions.push(gte(products.createdAt, since));
-        }
+    /**
+     * Executa a query de produtos baseado no type da seção.
+     *
+     * Cada type tem sua lógica de filtro e ordenação padrão.
+     * O filterJson serve apenas para overrides (limit, gender, daysAgo).
+     */
+    private async resolveProductList(
+        type: SectionType,
+        filter: SectionFilterJson,
+    ) {
+        const limit = filter.limit ?? 10;
 
-        const orderBy = {
-            recommended: [desc(products.ratingAvg), desc(products.soldCount)],
-            newest: [desc(products.createdAt)],
-            price_asc: [asc(products.basePrice)],
-            price_desc: [desc(products.basePrice)],
-        }[sort] ?? [desc(products.createdAt)];
+        const baseCondition = eq(products.status, 'active');
+        const conditions = [baseCondition];
+
+        let orderBy: SQL<unknown>[];
+
+        switch (type) {
+            case 'top_selling':
+                orderBy = [desc(products.soldCount), desc(products.ratingAvg)];
+                break;
+
+            case 'new_in': {
+                const daysAgo = filter.daysAgo ?? 30;
+                const since = new Date();
+                since.setDate(since.getDate() - daysAgo);
+                conditions.push(gte(products.createdAt, since));
+                orderBy = [desc(products.createdAt)];
+                break;
+            }
+
+            case 'on_sale':
+                conditions.push(isNotNull(products.originalPrice));
+                orderBy = [desc(products.soldCount)];
+                break;
+
+            case 'free_shipping':
+                conditions.push(eq(products.freeShipping, true));
+                orderBy = [desc(products.ratingAvg), desc(products.soldCount)];
+                break;
+
+            case 'by_gender':
+                if (filter.gender) {
+                    conditions.push(eq(products.gender, filter.gender));
+                }
+                orderBy = [desc(products.soldCount), desc(products.ratingAvg)];
+                break;
+
+            default:
+                orderBy = [desc(products.soldCount)];
+        }
 
         const rows = await db.query.products.findMany({
             where: and(...conditions),

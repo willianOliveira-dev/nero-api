@@ -4,6 +4,7 @@ import { HomeController } from '../controllers/home.controller';
 import {
     createHomeSectionSchema,
     homeSectionParamsSchema,
+    homeSectionSlugParamsSchema,
     reorderHomeSectionsSchema,
     updateHomeSectionSchema,
 } from '../validations/home.validation';
@@ -36,10 +37,18 @@ const homeSectionSchema = z.object({
     id: z.string().uuid(),
     slug: z.string(),
     title: z.string(),
-    type: z.enum(['product_list', 'category_list', 'banner']),
+    type: z.enum([
+        'top_selling',
+        'new_in',
+        'on_sale',
+        'free_shipping',
+        'by_gender',
+        'category_list',
+        'banner',
+    ]),
     sortOrder: z.number(),
     isActive: z.boolean(),
-    filterJson: z.record(z.string(), z.string()).nullable(),
+    filterJson: z.record(z.string(), z.unknown()).nullable(),
     items: z.array(productCardSchema),
     updatedAt: z.date(),
 });
@@ -48,50 +57,49 @@ const adminSectionSchema = z.object({
     id: z.string().uuid(),
     slug: z.string(),
     title: z.string(),
-    type: z.enum(['product_list', 'category_list', 'banner']),
+    type: z.enum([
+        'top_selling',
+        'new_in',
+        'on_sale',
+        'free_shipping',
+        'by_gender',
+        'category_list',
+        'banner',
+    ]),
     sortOrder: z.number(),
     isActive: z.boolean(),
-    filterJson: z.record(z.string(), z.string()).nullable(),
+    filterJson: z.record(z.string(), z.unknown()).nullable(),
     updatedAt: z.date(),
 });
 
 export const homeRoutes: FastifyPluginAsyncZod = async (app) => {
-    
-    // ── Rotas públicas ──────────────────────────────────────────
-
     app.get('/home', {
         schema: {
             tags: ['Home'],
             summary: 'Retornar todas as seções ativas da home com produtos',
             operationId: 'getHome',
-            response: {
-                200: z.array(homeSectionSchema),
-            },
+            response: { 200: z.array(homeSectionSchema) },
         },
         handler: controller.getHome,
     });
 
-    app.get('/home/:id', {
+    app.get('/home/:slug', {
         schema: {
             tags: ['Home'],
             summary: 'Retornar seção específica por slug',
             operationId: 'getHomeSection',
-            params: homeSectionParamsSchema,
+            params: homeSectionSlugParamsSchema,
             response: { 200: homeSectionSchema },
         },
         handler: controller.getSection,
     });
-
-    // ── Rotas admin ─────────────────────────────────────────────
 
     app.get('/admin/home', {
         schema: {
             tags: ['Home'],
             summary: 'Listar todas as seções (admin)',
             operationId: 'listHomeSections',
-            response: {
-                200: z.array(adminSectionSchema),
-            },
+            response: { 200: z.array(adminSectionSchema) },
         },
         preHandler: [app.authenticate],
         handler: controller.listAll,
@@ -128,7 +136,7 @@ export const homeRoutes: FastifyPluginAsyncZod = async (app) => {
             summary: 'Remover seção (admin)',
             operationId: 'deleteHomeSection',
             params: homeSectionParamsSchema,
-                200: z.object({ deleted: z.boolean() }),
+            response: { 200: z.object({ deleted: z.boolean() }) },
         },
         preHandler: [app.authenticate],
         handler: controller.delete,
@@ -140,7 +148,7 @@ export const homeRoutes: FastifyPluginAsyncZod = async (app) => {
             summary: 'Reordenar seções (admin)',
             operationId: 'reorderHomeSections',
             body: reorderHomeSectionsSchema,
-                200: z.object({ reordered: z.boolean() }),
+            response: { 200: z.object({ reordered: z.boolean() }) },
         },
         preHandler: [app.authenticate],
         handler: controller.reorder,

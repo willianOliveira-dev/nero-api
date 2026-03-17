@@ -1,7 +1,16 @@
 import { z } from 'zod';
 
+export const sectionTypeEnum = z.enum(
+    ['top_selling', 'new_in', 'on_sale', 'free_shipping', 'by_gender', 'category_list', 'banner'],
+    { message: 'Tipo inválido.' },
+);
+
 export const homeSectionParamsSchema = z.object({
     id: z.string().uuid({ message: 'ID inválido.', version: 'v7' }),
+});
+
+export const homeSectionSlugParamsSchema = z.object({
+    slug: z.string().min(1, { message: 'Slug inválido.' }),
 });
 
 export const createHomeSectionSchema = z.object({
@@ -14,9 +23,7 @@ export const createHomeSectionSchema = z.object({
         .string()
         .min(2, { message: 'O título deve ter no mínimo 2 caracteres.' })
         .max(120, { message: 'O título deve ter no máximo 120 caracteres.' }),
-    type: z.enum(['product_list', 'category_list', 'banner'], {
-        message: 'Tipo inválido.',
-    }),
+    type: sectionTypeEnum,
     sortOrder: z
         .number({ message: 'A posição deve ser um número.' })
         .int({ message: 'A posição deve ser um número inteiro.' })
@@ -25,33 +32,18 @@ export const createHomeSectionSchema = z.object({
     isActive: z.boolean().default(true),
     filterJson: z
         .object({
-            sort: z
-                .enum(['recommended', 'newest', 'price_asc', 'price_desc'], {
-                    message: 'Valor inválido.',
-                })
-                .optional(),
             gender: z
-                .enum(['men', 'women', 'kids', 'unisex'], {
-                    message: 'Valor inválido.',
-                })
-                .optional(),
-            deals: z
-                .enum(['on_sale', 'free_shipping'], {
-                    message: 'Valor inválido.',
-                })
+                .enum(['men', 'women', 'kids', 'unisex'], { message: 'Valor inválido.' })
                 .optional(),
             limit: z
                 .number({ message: 'O limite deve ser um número.' })
                 .int({ message: 'O limite deve ser um número inteiro.' })
                 .min(1, { message: 'O limite deve ser maior que zero.' })
-                .max(100, { message: 'O limite deve ser menor que 100.' })
                 .max(50, { message: 'O limite deve ser menor que 50.' })
                 .optional(),
             daysAgo: z
                 .number({ message: 'O número de dias deve ser um número.' })
-                .int({
-                    message: 'O número de dias deve ser um número inteiro.',
-                })
+                .int({ message: 'O número de dias deve ser um número inteiro.' })
                 .min(1, { message: 'O período deve ser de pelo menos 1 dia.' })
                 .optional(),
         })
@@ -75,9 +67,9 @@ export const reorderHomeSectionsSchema = z.object({
         .min(1, { message: 'É necessário informar pelo menos um item.' }),
 });
 
-export type HomeSectionParams = z.infer<typeof homeSectionParamsSchema>;
-export type CreateHomeSectionInput = z.infer<typeof createHomeSectionSchema>;
-export type UpdateHomeSectionInput = z.infer<typeof updateHomeSectionSchema>;
-export type ReorderHomeSectionsInput = z.infer<
-    typeof reorderHomeSectionsSchema
->;
+export type HomeSectionParams        = z.infer<typeof homeSectionParamsSchema>;
+export type HomeSectionSlugParams    = z.infer<typeof homeSectionSlugParamsSchema>;
+export type CreateHomeSectionInput   = z.infer<typeof createHomeSectionSchema>;
+export type UpdateHomeSectionInput   = z.infer<typeof updateHomeSectionSchema>;
+export type ReorderHomeSectionsInput = z.infer<typeof reorderHomeSectionsSchema>;
+export type SectionType              = z.infer<typeof sectionTypeEnum>;

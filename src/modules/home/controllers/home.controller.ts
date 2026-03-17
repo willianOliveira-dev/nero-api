@@ -41,8 +41,8 @@ export class HomeController {
     };
 
     delete: DeleteHomeSectionHandler = async (request, reply) => {
-        const result = await homeService.delete(request.params.id);
-        return reply.status(200).send(result);
+        await homeService.delete(request.params.id);
+        return reply.status(204).send();
     };
 
     reorder: ReorderHomeSectionsHandler = async (request, reply) => {
