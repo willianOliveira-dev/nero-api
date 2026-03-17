@@ -189,10 +189,10 @@ export class CartService {
 
         if (existingItem) {
             if (variantId && existingItem.variant?.price) {
-                return existingItem.variant.price;
+                return String(existingItem.variant.price);
             }
             if (existingItem.product?.basePrice) {
-                return existingItem.product.basePrice;
+                return String(existingItem.product.basePrice);
             }
         }
 

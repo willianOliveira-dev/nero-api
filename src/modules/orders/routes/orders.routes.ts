@@ -1,17 +1,17 @@
-/**
- * orders.routes.ts
- */
-
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { OrdersController } from '../controllers/orders.controller';
+import {
+    cancelOrderHandler,
+    getOrderHandler,
+    listAllOrdersHandler,
+    listOrdersHandler,
+    updateOrderStatusHandler,
+} from '../handlers/orders.handlers';
 import {
     listOrdersQuerySchema,
     orderParamsSchema,
     updateOrderStatusSchema,
 } from '../validations/orders.validation';
-
-const controller = new OrdersController();
 
 const priceOutputSchema = z.object({
     cents: z.number(),
@@ -87,9 +87,6 @@ const metaSchema = z.object({
 });
 
 export const ordersRoutes: FastifyPluginAsyncZod = async (app) => {
-    
-    // ── Rotas do usuário ────────────────────────────────────────
-
     app.get('/orders', {
         schema: {
             tags: ['Orders'],
@@ -105,7 +102,7 @@ export const ordersRoutes: FastifyPluginAsyncZod = async (app) => {
             },
         },
         preHandler: [app.authenticate],
-        handler: controller.list,
+        handler: listOrdersHandler,
     });
 
     app.get('/orders/:id', {
@@ -117,7 +114,7 @@ export const ordersRoutes: FastifyPluginAsyncZod = async (app) => {
             response: { 200: orderDetailSchema },
         },
         preHandler: [app.authenticate],
-        handler: controller.getById,
+        handler: getOrderHandler,
     });
 
     app.post('/orders/:id/cancel', {
@@ -129,10 +126,8 @@ export const ordersRoutes: FastifyPluginAsyncZod = async (app) => {
             response: { 200: orderDetailSchema },
         },
         preHandler: [app.authenticate],
-        handler: controller.cancel,
+        handler: cancelOrderHandler,
     });
-
-    // ── Rotas admin ─────────────────────────────────────────────
 
     app.get('/admin/orders', {
         schema: {
@@ -148,7 +143,7 @@ export const ordersRoutes: FastifyPluginAsyncZod = async (app) => {
             },
         },
         preHandler: [app.authenticate],
-        handler: controller.listAll,
+        handler: listAllOrdersHandler,
     });
 
     app.patch('/admin/orders/:id/status', {
@@ -161,6 +156,6 @@ export const ordersRoutes: FastifyPluginAsyncZod = async (app) => {
             response: { 200: orderDetailSchema },
         },
         preHandler: [app.authenticate],
-        handler: controller.updateStatus,
+        handler: updateOrderStatusHandler,
     });
 };

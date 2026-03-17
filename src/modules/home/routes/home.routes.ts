@@ -1,6 +1,14 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { HomeController } from '../controllers/home.controller';
+import {
+    createHomeSectionHandler,
+    deleteHomeSectionHandler,
+    getHomeHandler,
+    getHomeSectionHandler,
+    listHomeSectionsHandler,
+    reorderHomeSectionsHandler,
+    updateHomeSectionHandler,
+} from '../handlers/home.handlers';
 import {
     createHomeSectionSchema,
     homeSectionParamsSchema,
@@ -8,8 +16,6 @@ import {
     reorderHomeSectionsSchema,
     updateHomeSectionSchema,
 } from '../validations/home.validation';
-
-const controller = new HomeController();
 
 const priceOutputSchema = z.object({
     cents: z.number(),
@@ -80,7 +86,7 @@ export const homeRoutes: FastifyPluginAsyncZod = async (app) => {
             operationId: 'getHome',
             response: { 200: z.array(homeSectionSchema) },
         },
-        handler: controller.getHome,
+        handler: getHomeHandler,
     });
 
     app.get('/home/:slug', {
@@ -91,7 +97,7 @@ export const homeRoutes: FastifyPluginAsyncZod = async (app) => {
             params: homeSectionSlugParamsSchema,
             response: { 200: homeSectionSchema },
         },
-        handler: controller.getSection,
+        handler: getHomeSectionHandler,
     });
 
     app.get('/admin/home', {
@@ -102,7 +108,7 @@ export const homeRoutes: FastifyPluginAsyncZod = async (app) => {
             response: { 200: z.array(adminSectionSchema) },
         },
         preHandler: [app.authenticate],
-        handler: controller.listAll,
+        handler: listHomeSectionsHandler,
     });
 
     app.post('/admin/home', {
@@ -114,7 +120,7 @@ export const homeRoutes: FastifyPluginAsyncZod = async (app) => {
             response: { 201: adminSectionSchema },
         },
         preHandler: [app.authenticate],
-        handler: controller.create,
+        handler: createHomeSectionHandler,
     });
 
     app.patch('/admin/home/:id', {
@@ -127,7 +133,7 @@ export const homeRoutes: FastifyPluginAsyncZod = async (app) => {
             response: { 200: adminSectionSchema },
         },
         preHandler: [app.authenticate],
-        handler: controller.update,
+        handler: updateHomeSectionHandler,
     });
 
     app.delete('/admin/home/:id', {
@@ -139,7 +145,7 @@ export const homeRoutes: FastifyPluginAsyncZod = async (app) => {
             response: { 200: z.object({ deleted: z.boolean() }) },
         },
         preHandler: [app.authenticate],
-        handler: controller.delete,
+        handler: deleteHomeSectionHandler,
     });
 
     app.post('/admin/home/reorder', {
@@ -151,6 +157,6 @@ export const homeRoutes: FastifyPluginAsyncZod = async (app) => {
             response: { 200: z.object({ reordered: z.boolean() }) },
         },
         preHandler: [app.authenticate],
-        handler: controller.reorder,
+        handler: reorderHomeSectionsHandler,
     });
 };

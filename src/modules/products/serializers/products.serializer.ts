@@ -1,117 +1,149 @@
-import type {
-    PriceOutput,
-    ProductPriceOutput,
-} from '@/shared/utils/price.util';
+
 import { Price } from '@/shared/utils/price.util';
 
-type RawVariant = {
+export type RawBrand = {
     id: string;
-    productId: string;
-    sku: string;
-    price: string | null;
-    stock: number;
-    attributes: Record<string, string | undefined>;
-    isActive: boolean;
+    name: string;
+    slug: string;
+    logoUrl: string | null;
 };
 
-type RawProduct = {
+export type RawCategory = {
+    id: string;
+    name: string;
+    slug: string;
+    parentId: string | null;
+    parent?: { id: string; name: string; slug: string } | null;
+};
+
+export type RawImage = {
+    id: string;
+    url: string;
+    altText: string | null;
+    position: number;
+    isPrimary: boolean;
+    variantId: string | null;
+};
+
+export type RawVariant = {
+    id: string;
+    sku: string;
+    gtin: string | null;
+    stock: number;
+    isActive: boolean;
+    price: number | null;
+    attributes: Record<string, string>;
+    weightInGrams: number | null;
+    lengthCm: string | null;
+    widthCm: string | null;
+    heightCm: string | null;
+};
+
+export type RawProduct = {
     id: string;
     name: string;
     slug: string;
     description: string | null;
-    basePrice: string;
-    originalPrice: string | null;
+    basePrice: number;
+    originalPrice: number | null;
     gender: string;
     status: string;
     freeShipping: boolean;
-    isFeatured: boolean;
     soldCount: number;
     ratingAvg: string | null;
     ratingCount: number;
+    sizeChartUrl: string | null;
     categoryId: string | null;
+    brandId: string | null;
     createdAt: Date;
     updatedAt: Date;
-    category?: unknown;
+    brand?: RawBrand | null;
+    category?: RawCategory | null;
     variants?: RawVariant[];
-    images?: unknown[];
+    images?: RawImage[];
 };
 
-export type SerializedVariant = {
-    id: string;
-    productId: string;
-    sku: string;
-    price: PriceOutput | null;
-    stock: number;
-    attributes: Record<string, string>;
-    isActive: boolean;
-};
-
-export type SerializedProduct = {
-    id: string;
-    name: string;
-    slug: string;
-    description: string | null;
-    price: ProductPriceOutput;
-    gender: string;
-    status: string;
-    freeShipping: boolean;
-    isFeatured: boolean;
-    soldCount: number;
-    ratingAvg: number | null;
-    ratingCount: number;
-    categoryId: string | null;
-    category: unknown;
-    variants: SerializedVariant[];
-    images: unknown[];
-    createdAt: Date;
-    updatedAt: Date;
-};
-
-function clearAttributes(
-    attrs: Record<string, string | undefined>,
-): Record<string, string> {
-    return Object.fromEntries(
-        Object.entries(attrs).filter(([, value]) => value !== undefined),
-    ) as Record<string, string>;
-}
-
-export function serializeVariant(variant: RawVariant): SerializedVariant {
+export function serializeProductCard(product: RawProduct) {
     return {
-        id: variant.id,
-        productId: variant.productId,
-        sku: variant.sku,
-        price: variant.price ? Price.toOutput(variant.price) : null,
-        stock: variant.stock,
-        attributes: clearAttributes(variant.attributes),
-        isActive: variant.isActive,
+        id: product.id,
+        name: product.name,
+        slug: product.slug,
+        price: Price.toProductOutput(product.basePrice, product.originalPrice),
+        brand: product.brand ? {
+            name: product.brand.name,
+            slug: product.brand.slug
+        } : null,
+        rating: {
+            average: product.ratingAvg ? Number(product.ratingAvg) : 0,
+            count: product.ratingCount
+        },
+        imageUrl: product.images?.find(i => i.isPrimary)?.url ?? product.images?.[0]?.url ?? null,
+        freeShipping: product.freeShipping
     };
 }
 
-export function serializeProduct(product: RawProduct): SerializedProduct {
+export function serializeProductList(products: RawProduct[]) {
+    return products.map(serializeProductCard);
+}
+
+export function serializeProductDetail(product: RawProduct, isWishlisted = false) {
+    const images = [...(product.images ?? [])].sort((a, b) => a.position - b.position);
+    const variants = (product.variants ?? []).filter(v => v.isActive);
+
+    const categories = [];
+    if (product.category?.parent) {
+        categories.push({ name: product.category.parent.name, slug: product.category.parent.slug });
+    }
+    if (product.category) {
+        categories.push({ name: product.category.name, slug: product.category.slug });
+    }
+
     return {
         id: product.id,
         name: product.name,
         slug: product.slug,
         description: product.description,
-        price: Price.toProductOutput(product.basePrice, product.originalPrice),
-        gender: product.gender,
         status: product.status,
-        freeShipping: product.freeShipping,
-        isFeatured: product.isFeatured,
-        soldCount: product.soldCount,
-        ratingAvg: product.ratingAvg ? Number(product.ratingAvg) : null,
-        ratingCount: product.ratingCount,
-        categoryId: product.categoryId,
-        category: product.category ?? null,
-        variants: product.variants?.map(serializeVariant) ?? [],
-        images: product.images ?? [],
-        createdAt: product.createdAt,
-        updatedAt: product.updatedAt,
+        price: Price.toProductOutput(product.basePrice, product.originalPrice),
+        brand: product.brand ? {
+            name: product.brand.name,
+            slug: product.brand.slug,
+            logo: product.brand.logoUrl
+        } : null,
+        categories,
+        images: images.filter(img => !img.variantId).map(img => ({
+            id: img.id,
+            url: img.url,
+            alt: img.altText,
+            isPrimary: img.isPrimary
+        })),
+        variants: variants.map(v => ({
+            id: v.id,
+            sku: v.sku,
+            stock: v.stock,
+            attributes: v.attributes,
+            price: Price.toProductOutput(
+                v.price ?? product.basePrice,
+                v.price ? null : product.originalPrice
+            ),
+            images: images.filter(img => img.variantId === v.id).map(img => ({
+                id: img.id,
+                url: img.url,
+                alt: img.altText
+            }))
+        })),
+        rating: {
+            average: product.ratingAvg ? Number(product.ratingAvg) : 0,
+            count: product.ratingCount,
+            sold: product.soldCount
+        },
+        features: {
+            freeShipping: product.freeShipping,
+            gender: product.gender,
+            sizeChart: product.sizeChartUrl
+        },
+        userContext: {
+            isWishlisted
+        }
     };
-}
-
-export function serializeProductList(
-    products: RawProduct[],
-): SerializedProduct[] {
-    return products.map(serializeProduct);
 }

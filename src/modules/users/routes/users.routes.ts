@@ -1,9 +1,13 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { UsersController } from '../controllers/users.controller';
+import {
+    confirmAvatarHandler,
+    getMeHandler,
+    presignAvatarHandler,
+    removeAvatarHandler,
+    updateMeHandler,
+} from '../handlers/users.handlers';
 import { updateProfileSchema } from '../validations/users.validation';
-
-const usersController = new UsersController();
 
 export const usersRoutes: FastifyPluginAsyncZod = async (app) => {
     app.addHook('preHandler', app.authenticate);
@@ -28,7 +32,7 @@ export const usersRoutes: FastifyPluginAsyncZod = async (app) => {
                 }),
             },
         },
-        handler: usersController.getMe,
+        handler: getMeHandler,
     });
 
     // ── PATCH /v1/me ────────────────────────────────────────────
@@ -49,7 +53,7 @@ export const usersRoutes: FastifyPluginAsyncZod = async (app) => {
                 }),
             },
         },
-        handler: usersController.updateMe,
+        handler: updateMeHandler,
     });
 
     // ── POST /v1/me/avatar/presign ──────────────────────────────
@@ -69,7 +73,7 @@ export const usersRoutes: FastifyPluginAsyncZod = async (app) => {
                 }),
             },
         },
-        handler: usersController.presignAvatar,
+        handler: presignAvatarHandler,
     });
 
     // ── PATCH /v1/me/avatar/confirm ─────────────────────────────
@@ -87,7 +91,7 @@ export const usersRoutes: FastifyPluginAsyncZod = async (app) => {
                 }),
             },
         },
-        handler: usersController.confirmAvatar,
+        handler: confirmAvatarHandler,
     });
 
     // ── DELETE /v1/me/avatar ────────────────────────────────────
@@ -102,6 +106,6 @@ export const usersRoutes: FastifyPluginAsyncZod = async (app) => {
                 }),
             },
         },
-        handler: usersController.removeAvatar,
+        handler: removeAvatarHandler,
     });
 };

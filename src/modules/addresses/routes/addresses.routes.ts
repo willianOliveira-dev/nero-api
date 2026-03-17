@@ -1,13 +1,18 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { AddressesController } from '../controllers/addresses.controller';
+import {
+    createAddressHandler,
+    deleteAddressHandler,
+    getDefaultAddressHandler,
+    listAddressesHandler,
+    setDefaultAddressHandler,
+    updateAddressHandler,
+} from '../handlers/addresses.handlers';
 import {
     addressParamsSchema,
     createAddressSchema,
     updateAddressSchema,
 } from '../validations/addresses.validation';
-
-const controller = new AddressesController();
 
 const addressResponseSchema = z.object({
     id: z.string().uuid(),
@@ -36,7 +41,7 @@ export const addressesRoutes: FastifyPluginAsyncZod = async (app) => {
                 200: z.array(addressResponseSchema),
             },
         },
-        handler: controller.list,
+        handler: listAddressesHandler,
     });
 
     app.get('/me/addresses/default', {
@@ -48,7 +53,7 @@ export const addressesRoutes: FastifyPluginAsyncZod = async (app) => {
                 200: addressResponseSchema,
             },
         },
-        handler: controller.getDefault,
+        handler: getDefaultAddressHandler,
     });
 
     app.post('/me/addresses', {
@@ -61,7 +66,7 @@ export const addressesRoutes: FastifyPluginAsyncZod = async (app) => {
                 201: addressResponseSchema,
             },
         },
-        handler: controller.create,
+        handler: createAddressHandler,
     });
 
     app.patch('/me/addresses/:id', {
@@ -75,7 +80,7 @@ export const addressesRoutes: FastifyPluginAsyncZod = async (app) => {
                 200: addressResponseSchema,
             },
         },
-        handler: controller.update,
+        handler: updateAddressHandler,
     });
 
     app.patch('/me/addresses/:id/default', {
@@ -88,7 +93,7 @@ export const addressesRoutes: FastifyPluginAsyncZod = async (app) => {
                 200: addressResponseSchema,
             },
         },
-        handler: controller.setDefault,
+        handler: setDefaultAddressHandler,
     });
 
     app.delete('/me/addresses/:id', {
@@ -101,6 +106,6 @@ export const addressesRoutes: FastifyPluginAsyncZod = async (app) => {
                 200: z.object({ deleted: z.boolean() }),
             },
         },
-        handler: controller.delete,
+        handler: deleteAddressHandler,
     });
 };

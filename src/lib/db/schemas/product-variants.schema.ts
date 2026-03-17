@@ -1,22 +1,5 @@
-/**
- * product-variants.schema.ts
- * ─────────────────────────────────────────────────────────────
- * SKUs individuais de cada produto.
- * Cada variante combina atributos (cor, tamanho, etc.)
- * armazenados em JSONB flexível.
- *
- * Exemplo de attributes:
- *   { "color": "Lemon", "hexColor": "#F5C518", "size": "M" }
- *   { "color": "Black", "hexColor": "#000000", "size": "L" }
- *   { "size": "XL" }
- *
- * price: quando null, o produto usa products.basePrice.
- * ─────────────────────────────────────────────────────────────
- */
-
 import {
     boolean,
-    index,
     integer,
     jsonb,
     numeric,
@@ -28,37 +11,28 @@ import {
 import { uuidv7 } from 'uuidv7';
 import { products } from './products.schema';
 
-// ── Types para o JSONB de atributos ──────────────────────────
-export type VariantAttributes = {
-    size?: string; // "P" | "M" | "G" | "GG" | "XGG"
-    color?: string; // "Lemon" | "Black" | "Sage Green"
-    hexColor?: string; // "#F5C518" — para renderizar o swatch
-    [key: string]: string | undefined; // extensível para futuros atributos
-};
+export type VariantAttributes = Record<string, string>;
 
-// ── Table ─────────────────────────────────────────────────────
 export const productVariants = pgTable(
     'product_variants',
     {
-        id: text('id')
-            .primaryKey()
-            .$defaultFn(() => uuidv7()),
-        productId: text('product_id')
-            .notNull()
-            .references(() => products.id, { onDelete: 'cascade' }),
-        /** Ex: JACKET-M-LEMON — deve ser único globalmente */
-        sku: varchar('sku', { length: 100 }).notNull().unique(),
-        /** null = herda products.basePrice */
-        price: numeric('price', { precision: 10, scale: 2 }),
-        stock: integer('stock').notNull().default(0),
+        id:        text('id').primaryKey().$defaultFn(() => uuidv7()),
+        productId: text('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
+        sku:       varchar('sku', { length: 100 }).notNull().unique(),
+        gtin:      varchar('gtin', { length: 14 }),
+        price: integer('price'),
+        stock:      integer('stock').notNull().default(0),
         attributes: jsonb('attributes').$type<VariantAttributes>().notNull(),
-        isActive: boolean('is_active').notNull().default(true),
+        isActive:   boolean('is_active').notNull().default(true),
+        weightInGrams: integer('weight_in_grams'),
+        lengthCm:      numeric('length_cm', { precision: 6, scale: 1 }),
+        widthCm:       numeric('width_cm',  { precision: 6, scale: 1 }),
+        heightCm:      numeric('height_cm', { precision: 6, scale: 1 }),
     },
     (t) => [
         uniqueIndex('idx_product_variants_sku').on(t.sku),
-        index('idx_product_variants_product_id').on(t.productId),
     ],
 );
-// ── Types ─────────────────────────────────────────────────────
-export type ProductVariant = typeof productVariants.$inferSelect;
+
+export type ProductVariant    = typeof productVariants.$inferSelect;
 export type NewProductVariant = typeof productVariants.$inferInsert;

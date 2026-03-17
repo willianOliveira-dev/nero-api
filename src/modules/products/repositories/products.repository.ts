@@ -4,6 +4,8 @@ import {
     productImages,
     products,
     productVariants,
+    wishlistItems,
+    wishlists,
 } from '@/lib/db/schemas/index.schema';
 import { Price } from '@/shared/utils/price.util';
 import type {
@@ -22,38 +24,84 @@ export class ProductsRepository {
             db.query.products.findFirst({
                 where: eq(products.id, id),
                 with: {
-                    category: true,
+                    brand: {
+                        columns: {
+                            id: true,
+                            name: true,
+                            slug: true,
+                            logoUrl: true,
+                        },
+                    },
+                    category: {
+                        columns: {
+                            id: true,
+                            name: true,
+                            slug: true,
+                            parentId: true,
+                        },
+                    },
                     variants: {
                         where: eq(productVariants.isActive, true),
                         orderBy: asc(productVariants.sku),
                     },
-                    images: {
-                        orderBy: asc(productImages.position),
-                    },
+                    images: { orderBy: asc(productImages.position) },
                 },
             }) ?? null
         );
     }
 
-    async findBySlug(slug: string) {
-        return (
-            db.query.products.findFirst({
-                where: and(
-                    eq(products.slug, slug),
-                    eq(products.status, 'active'),
-                ),
-                with: {
-                    category: true,
-                    variants: {
-                        where: eq(productVariants.isActive, true),
-                        orderBy: asc(productVariants.sku),
-                    },
-                    images: {
-                        orderBy: asc(productImages.position),
+    async findBySlug(slug: string, userId?: string) {
+        const product = await db.query.products.findFirst({
+            where: and(eq(products.slug, slug), eq(products.status, 'active')),
+            with: {
+                brand: {
+                    columns: {
+                        id: true,
+                        name: true,
+                        slug: true,
+                        logoUrl: true,
                     },
                 },
-            }) ?? null
-        );
+                category: {
+                    columns: {
+                        id: true,
+                        name: true,
+                        slug: true,
+                        parentId: true,
+                    },
+                    with: {
+                        parent: {
+                            columns: { id: true, name: true, slug: true },
+                        },
+                    },
+                },
+                variants: {
+                    where: eq(productVariants.isActive, true),
+                    orderBy: asc(productVariants.sku),
+                },
+                images: { orderBy: asc(productImages.position) },
+            },
+        });
+
+        if (!product) {
+            return null;
+        }
+
+        let isWishlisted = false;
+        if (userId) {
+            const wishlist = await db.query.wishlists.findFirst({
+                where: eq(wishlists.userId, userId),
+                with: {
+                    items: {
+                        where: eq(wishlistItems.productId, product.id),
+                        limit: 1,
+                    },
+                },
+            });
+            isWishlisted = (wishlist?.items?.length ?? 0) > 0;
+        }
+
+        return { ...product, isWishlisted };
     }
 
     async search(filters: SearchProductsInput) {
@@ -77,12 +125,11 @@ export class ProductsRepository {
         if (categoryId) {
             conditions.push(eq(products.categoryId, categoryId));
         }
-
         if (priceMin) {
-            conditions.push(gt(products.basePrice, Price.toCents(priceMin)));
+            conditions.push(gt(products.basePrice, Price.toInt(priceMin)));
         }
         if (priceMax) {
-            conditions.push(lt(products.basePrice, Price.toCents(priceMax)));
+            conditions.push(lt(products.basePrice, Price.toInt(priceMax)));
         }
 
         if (deals === 'on_sale') {
@@ -94,7 +141,7 @@ export class ProductsRepository {
 
         if (q) {
             conditions.push(
-                sql`${products.searchVector} @@ plainto_tsquery('english', ${q})`,
+                sql`${products.searchVector} @@ plainto_tsquery('portuguese', ${q})`,
             );
         }
 
@@ -114,6 +161,14 @@ export class ProductsRepository {
             orderBy,
             limit: limit + 1,
             with: {
+                brand: {
+                    columns: {
+                        id: true,
+                        name: true,
+                        slug: true,
+                        logoUrl: true,
+                    },
+                },
                 images: {
                     where: eq(productImages.isPrimary, true),
                     limit: 1,
@@ -138,8 +193,8 @@ export class ProductsRepository {
             .insert(products)
             .values({
                 ...input,
-                basePrice: Price.toCents(input.basePrice),
-                originalPrice: Price.toCents(input.originalPrice ?? null),
+                basePrice: Price.toInt(input.basePrice),
+                originalPrice: Price.toInt(input.originalPrice ?? null),
             })
             .returning();
 
@@ -154,13 +209,13 @@ export class ProductsRepository {
             .set({
                 ...rest,
                 ...(basePrice !== undefined && {
-                    basePrice: Price.toCents(basePrice),
+                    basePrice: Price.toInt(basePrice),
                 }),
                 ...(originalPrice !== undefined && {
                     originalPrice:
                         originalPrice === null
                             ? null
-                            : Price.toCents(originalPrice),
+                            : Price.toInt(originalPrice),
                 }),
                 updatedAt: new Date(),
             })
@@ -204,7 +259,7 @@ export class ProductsRepository {
             .values({
                 ...input,
                 productId,
-                price: Price.toCents(input.price ?? null),
+                price: Price.toInt(input.price ?? null),
             })
             .returning();
 
@@ -214,21 +269,19 @@ export class ProductsRepository {
     async updateVariant(id: string, input: UpdateVariantInput) {
         const { price, ...rest } = input;
 
-        const result = await db
+        const [result] = await db
             .update(productVariants)
             .set({
                 ...rest,
                 ...(price !== undefined && {
-                    price: price === null ? null : Price.toCents(price),
+                    price: price === null ? null : Price.toInt(price),
                 }),
             })
             .where(eq(productVariants.id, id))
             .returning();
 
-        return result[0] ?? null;
+        return result ?? null;
     }
-
-    // ── Images ────────────────────────────────────────────────
 
     async findImagesByProductId(productId: string) {
         return db.query.productImages.findMany({
@@ -242,7 +295,6 @@ export class ProductsRepository {
             where: eq(productImages.productId, productId),
             columns: { id: true },
         });
-
         return result.length;
     }
 

@@ -47,18 +47,23 @@ export class StorageService {
     async uploadBuffer(
         buffer: Buffer,
         folder: string,
-        publicId?: string,
+        options: {
+            publicId?: string;
+            resourceType?: 'image' | 'video' | 'raw' | 'auto';
+        } = {},
     ): Promise<{ url: string; publicId: string }> {
         return new Promise((resolve, reject) => {
             const stream = cloudinary.uploader.upload_stream(
                 {
                     folder,
-                    public_id: publicId,
-                    resource_type: 'image',
-                    transformation: [
-                        { quality: 'auto', fetch_format: 'auto' },
-                        { width: 1200, crop: 'limit' }, 
-                    ],
+                    public_id: options.publicId,
+                    resource_type: options.resourceType ?? 'image',
+                    transformation: options.resourceType === 'video' 
+                        ? [{ quality: 'auto' }] 
+                        : [
+                            { quality: 'auto', fetch_format: 'auto' },
+                            { width: 1200, crop: 'limit' },
+                        ],
                 },
                 (error, result) => {
                     if (error || !result) {

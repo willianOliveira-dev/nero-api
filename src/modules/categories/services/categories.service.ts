@@ -1,3 +1,4 @@
+import { StorageService } from '@/modules/storage/services/storage.service';
 import { ConflictError, NotFoundError } from '@/shared/errors/app.error';
 import { CategoriesRepository } from '../repositories/categories.repository';
 import type {
@@ -7,6 +8,7 @@ import type {
 } from '../validations/categories.validation';
 
 const categoriesRepository = new CategoriesRepository();
+const storageService = new StorageService();
 
 export class CategoriesService {
     async listActive() {
@@ -75,5 +77,12 @@ export class CategoriesService {
     async reorder(input: ReorderCategoriesInput) {
         await categoriesRepository.reorder(input.items);
         return { reordered: true };
+    }
+
+    async presignImage() {
+        return storageService.generateUploadSignature(
+            'categories',
+            `category_${Date.now()}`,
+        );
     }
 }

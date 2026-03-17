@@ -1,6 +1,15 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { CartController } from '../controllers/cart.controller';
+import {
+    addCartItemHandler,
+    applyCouponHandler,
+    clearCartHandler,
+    getCartHandler,
+    removeCartItemHandler,
+    removeCouponHandler,
+    updateCartItemHandler,
+    validateCouponHandler,
+} from '../handlers/cart.handlers';
 import {
     addCartItemSchema,
     applyCouponSchema,
@@ -8,8 +17,6 @@ import {
     couponCodeParamsSchema,
     updateCartItemSchema,
 } from '../validations/cart.validation';
-
-const controller = new CartController();
 
 const priceOutputSchema = z.object({
     cents: z.number(),
@@ -68,7 +75,7 @@ export const cartRoutes: FastifyPluginAsyncZod = async (app) => {
             operationId: 'getCart',
             response: { 200: cartResponseSchema },
         },
-        handler: controller.getCart,
+        handler: getCartHandler,
     });
 
     app.post('/cart/items', {
@@ -79,7 +86,7 @@ export const cartRoutes: FastifyPluginAsyncZod = async (app) => {
             body: addCartItemSchema,
             response: { 200: cartResponseSchema },
         },
-        handler: controller.addItem,
+        handler: addCartItemHandler,
     });
 
     app.patch('/cart/items/:itemId', {
@@ -91,7 +98,7 @@ export const cartRoutes: FastifyPluginAsyncZod = async (app) => {
             body: updateCartItemSchema,
             response: { 200: cartResponseSchema },
         },
-        handler: controller.updateItem,
+        handler: updateCartItemHandler,
     });
 
     app.delete('/cart/items/:itemId', {
@@ -102,7 +109,7 @@ export const cartRoutes: FastifyPluginAsyncZod = async (app) => {
             params: cartItemParamsSchema,
             response: { 200: cartResponseSchema },
         },
-        handler: controller.removeItem,
+        handler: removeCartItemHandler,
     });
 
     app.post('/cart/coupon', {
@@ -113,7 +120,7 @@ export const cartRoutes: FastifyPluginAsyncZod = async (app) => {
             body: applyCouponSchema,
             response: { 200: cartResponseSchema },
         },
-        handler: controller.applyCoupon,
+        handler: applyCouponHandler,
     });
 
     app.delete('/cart/coupon', {
@@ -123,7 +130,7 @@ export const cartRoutes: FastifyPluginAsyncZod = async (app) => {
             operationId: 'removeCoupon',
             response: { 200: cartResponseSchema },
         },
-        handler: controller.removeCoupon,
+        handler: removeCouponHandler,
     });
 
     app.get('/coupons/validate/:code', {
@@ -140,7 +147,7 @@ export const cartRoutes: FastifyPluginAsyncZod = async (app) => {
                 }),
             },
         },
-        handler: controller.validateCoupon,
+        handler: validateCouponHandler,
     });
 
     app.delete('/cart', {
@@ -152,6 +159,6 @@ export const cartRoutes: FastifyPluginAsyncZod = async (app) => {
                 200: z.object({ cleared: z.boolean() }),
             },
         },
-        handler: controller.clearCart,
+        handler: clearCartHandler,
     });
 };

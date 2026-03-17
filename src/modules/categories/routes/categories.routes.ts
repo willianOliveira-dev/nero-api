@@ -1,6 +1,14 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { CategoriesController } from '../controllers/categories.controller';
+import {
+    createCategoryHandler,
+    deactivateCategoryHandler,
+    getCategoryBySlugHandler,
+    listCategoriesHandler,
+    presignImageHandler,
+    reorderCategoriesHandler,
+    updateCategoryHandler,
+} from '../handlers/categories.handlers';
 import {
     categoryParamsSchema,
     categorySlugParamsSchema,
@@ -8,8 +16,6 @@ import {
     reorderCategoriesSchema,
     updateCategorySchema,
 } from '../validations/categories.validation';
-
-const controller = new CategoriesController();
 
 const categoryResponseSchema = z.object({
     id: z.string().uuid(),
@@ -48,7 +54,7 @@ export const categoriesRoutes: FastifyPluginAsyncZod = async (app) => {
                 200: z.array(categoryResponseSchema),
             },
         },
-        handler: controller.list,
+        handler: listCategoriesHandler,
     });
 
     app.get('/categories/:slug', {
@@ -59,7 +65,7 @@ export const categoriesRoutes: FastifyPluginAsyncZod = async (app) => {
             params: categorySlugParamsSchema,
             response: { 200: categoryResponseSchema },
         },
-        handler: controller.getBySlug,
+        handler: getCategoryBySlugHandler,
     });
 
     // ── Rotas admin ─────────────────────────────────────────────
@@ -72,7 +78,7 @@ export const categoriesRoutes: FastifyPluginAsyncZod = async (app) => {
             response: { 201: categoryResponseSchema },
         },
         preHandler: [app.authenticate],
-        handler: controller.create,
+        handler: createCategoryHandler,
     });
 
     app.patch('/admin/categories/:id', {
@@ -85,7 +91,7 @@ export const categoriesRoutes: FastifyPluginAsyncZod = async (app) => {
             response: { 200: categoryResponseSchema },
         } as const,
         preHandler: [app.authenticate],
-        handler: controller.update,
+        handler: updateCategoryHandler,
     });
 
     app.delete('/admin/categories/:id', {
@@ -97,7 +103,7 @@ export const categoriesRoutes: FastifyPluginAsyncZod = async (app) => {
             response: { 200: categoryResponseSchema },
         } as const,
         preHandler: [app.authenticate],
-        handler: controller.deactivate,
+        handler: deactivateCategoryHandler,
     });
 
     app.post('/admin/categories/reorder', {
@@ -111,6 +117,27 @@ export const categoriesRoutes: FastifyPluginAsyncZod = async (app) => {
             },
         },
         preHandler: [app.authenticate],
-        handler: controller.reorder,
+        handler: reorderCategoriesHandler,
+    });
+
+    app.post('/admin/categories/image/presign', {
+        schema: {
+            tags: ['Categories'],
+            summary: 'Gerar assinatura para upload de imagem (admin)',
+            operationId: 'presignCategoryImage',
+            response: {
+                200: z.object({
+                    data: z.object({
+                        signature: z.string(),
+                        timestamp: z.number(),
+                        folder: z.string(),
+                        cloudName: z.string(),
+                        apiKey: z.string(),
+                    }),
+                }),
+            },
+        },
+        preHandler: [app.authenticate],
+        handler: presignImageHandler,
     });
 };

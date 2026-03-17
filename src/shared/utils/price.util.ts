@@ -23,25 +23,25 @@ const formatter = new Intl.NumberFormat(LOCALE, {
 
 export class Price {
     /**
-     * Converte decimal para centavos
-     * Price.toCents(29.99) → "2999"
-     * Price.toCents(null)  → null
+     * Converte decimal (reais) para inteiro (centavos) — para inserção no banco.
+     * Price.toInt(129.90) → 12990
+     * Price.toInt(null)   → null
      */
-    static toCents(value: number): string;
-    static toCents(value: number | null | undefined): string | null;
-    static toCents(value: number | null | undefined): string | null {
+    static toInt(value: number): number;
+    static toInt(value: number | null | undefined): number | null;
+    static toInt(value: number | null | undefined): number | null {
         if (value == null) {
             return null;
         }
-        return String(Math.round(value * 100));
+        return Math.round(value * 100);
     }
 
     /**
-     * Converte centavos (string do PG) para decimal.
-     * Price.fromCents("2999") → 29.99
-     * Price.fromCents(null)   → null
+     * Converte centavos (number ou string do PG) para decimal.
+     * Price.fromCents(12990)   → 129.90
+     * Price.fromCents("12990") → 129.90
      */
-    static fromCents(value: string | null | undefined): number | null {
+    static fromCents(value: number | string | null | undefined): number | null {
         if (value == null) {
             return null;
         }
@@ -50,10 +50,10 @@ export class Price {
 
     /**
      * Formata centavos para string de exibição.
-     * Price.format("2999") → "$29.99"
-     * Price.format(null)   → null
+     * Price.format(12990)   → "R$ 129,90"
+     * Price.format("12990") → "R$ 129,90"
      */
-    static format(value: string | null | undefined): string | null {
+    static format(value: number | string | null | undefined): string | null {
         if (value == null) {
             return null;
         }
@@ -61,9 +61,10 @@ export class Price {
     }
 
     /**
-     * Constrói o objeto PriceOutput completo a partir de centavos.
+     * Constrói PriceOutput a partir de centavos (number ou string).
+     * Price.toOutput(12990) → { cents: 12990, value: 129.90, formatted: "R$ 129,90" }
      */
-    static toOutput(cents: string): PriceOutput {
+    static toOutput(cents: number | string): PriceOutput {
         const numeric = Number(cents);
         return {
             cents: numeric,
@@ -73,29 +74,12 @@ export class Price {
     }
 
     /**
-     * Constrói o objeto ProductPriceOutput completo.
-     * Inclui preço atual, original e percentual de desconto.
-     *
-     * Exemplo de retorno quando há promoção:
-     * {
-     *   current:  { cents: 2399, value: 23.99, formatted: "$23.99" },
-     *   original: { cents: 2999, value: 29.99, formatted: "$29.99" },
-     *   discountPercent: 20
-     * }
-     *
-     * Exemplo sem promoção:
-     * {
-     *   current:  { cents: 2999, value: 29.99, formatted: "$29.99" },
-     *   original: null,
-     *   discountPercent: null
-     * }
-     *
-     * @param basePrice     Preço atual em centavos (string do PG)
-     * @param originalPrice Preço antes da promoção em centavos (string | null)
+     * Constrói ProductPriceOutput completo.
+     * Aceita centavos como number (integer do PG) ou string.
      */
     static toProductOutput(
-        basePrice: string,
-        originalPrice: string | null | undefined,
+        basePrice: number | string,
+        originalPrice: number | string | null | undefined,
     ): ProductPriceOutput {
         const current = Price.toOutput(basePrice);
 
@@ -112,6 +96,17 @@ export class Price {
 
         return { current, original, discountPercent };
     }
+
+    /**
+     * @deprecated Use Price.toInt() instead.
+     * Mantido temporariamente para compatibilidade.
+     */
+    static toCents(value: number): string;
+    static toCents(value: number | null | undefined): string | null;
+    static toCents(value: number | null | undefined): string | null {
+        if (value == null) {
+            return null;
+        }
+        return String(Math.round(value * 100));
+    }
 }
-
-

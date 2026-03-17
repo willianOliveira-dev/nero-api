@@ -1,28 +1,30 @@
-import type { ZodHandler } from '@/types/handlers/root.handler';
-
 import type {
-  CreateAddressInput,
-  UpdateAddressInput,
+    ContextConfigDefault,
+    FastifySchema,
+    RawReplyDefaultExpression,
+    RawRequestDefaultExpression,
+    RawServerDefault,
+    RouteHandlerMethod,
+} from 'fastify';
+import type { ZodTypeProvider } from 'fastify-type-provider-zod';
+import type {
+    CreateAddressInput,
+    UpdateAddressInput,
 } from '../../modules/addresses/validations/addresses.validation';
 
-export type ListAddressesHandler = ZodHandler;
-
-export type GetDefaultAddressHandler = ZodHandler;
-
-export type CreateAddressHandler = ZodHandler<
-  unknown,
-  CreateAddressInput
+type Handler<TParams = unknown, TBody = unknown, TQuery = unknown> = RouteHandlerMethod<
+    RawServerDefault,
+    RawRequestDefaultExpression,
+    RawReplyDefaultExpression,
+    { Params: TParams; Body: TBody; Querystring: TQuery; Reply: any },
+    ContextConfigDefault,
+    FastifySchema,
+    ZodTypeProvider
 >;
 
-export type UpdateAddressHandler = ZodHandler<
-  { id: string },
-  UpdateAddressInput
->;
-
-export type SetDefaultAddressHandler = ZodHandler<
-  { id: string }
->;
-
-export type DeleteAddressHandler = ZodHandler<
-  { id: string }
->;
+export type ListAddressesHandler = Handler;
+export type GetDefaultAddressHandler = Handler;
+export type CreateAddressHandler = Handler<unknown, CreateAddressInput>;
+export type UpdateAddressHandler = Handler<{ id: string }, UpdateAddressInput>;
+export type SetDefaultAddressHandler = Handler<{ id: string }>;
+export type DeleteAddressHandler = Handler<{ id: string }>;

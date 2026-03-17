@@ -1,25 +1,33 @@
 import type {
+    ContextConfigDefault,
+    FastifySchema,
+    RawReplyDefaultExpression,
+    RawRequestDefaultExpression,
+    RawServerDefault,
+    RouteHandlerMethod,
+} from 'fastify';
+import type { ZodTypeProvider } from 'fastify-type-provider-zod';
+import type {
     CreateHomeSectionInput,
     HomeSectionParams,
+    ReorderHomeSectionsInput,
     UpdateHomeSectionInput,
 } from '../../modules/home/validations/home.validation';
-import type { ZodHandler } from './root.handler';
 
-export type GetHomeHandler = ZodHandler;
-export type GetHomeSectionHandler = ZodHandler<HomeSectionParams>;
+type Handler<TParams = unknown, TBody = unknown, TQuery = unknown> = RouteHandlerMethod<
+    RawServerDefault,
+    RawRequestDefaultExpression,
+    RawReplyDefaultExpression,
+    { Params: TParams; Body: TBody; Querystring: TQuery; Reply: any },
+    ContextConfigDefault,
+    FastifySchema,
+    ZodTypeProvider
+>;
 
-export type ListHomeSectionsHandler = ZodHandler;
-
-export type CreateHomeSectionHandler = ZodHandler<
-    unknown,
-    CreateHomeSectionInput
->;
-export type UpdateHomeSectionHandler = ZodHandler<
-    HomeSectionParams,
-    UpdateHomeSectionInput
->;
-export type DeleteHomeSectionHandler = ZodHandler<HomeSectionParams>;
-export type ReorderHomeSectionsHandler = ZodHandler<
-    unknown,
-    { items: { id: string; sortOrder: number }[] }
->;
+export type GetHomeHandler = Handler;
+export type GetHomeSectionHandler = Handler<HomeSectionParams>;
+export type ListHomeSectionsHandler = Handler;
+export type CreateHomeSectionHandler = Handler<unknown, CreateHomeSectionInput>;
+export type UpdateHomeSectionHandler = Handler<HomeSectionParams, UpdateHomeSectionInput>;
+export type DeleteHomeSectionHandler = Handler<HomeSectionParams>;
+export type ReorderHomeSectionsHandler = Handler<unknown, ReorderHomeSectionsInput>;

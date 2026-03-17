@@ -1,45 +1,25 @@
-/**
- * relations.ts
- * ─────────────────────────────────────────────────────────────
- * Define todas as relações do Drizzle ORM para uso com
- * db.query (Relational Query API).
- *
- * Cobertura completa:
- *   Better Auth   → user : session, account
- *   Usuário       → userProfiles, userAddresses, paymentMethods
- *   Catálogo      → categories, products, productVariants, productImages
- *   Wishlist      → wishlists, wishlistItems
- *   Carrinho      → carts, cartItems
- *   Pedidos       → orders, orderItems
- *   Reviews       → productReviews
- *   Home          → homeSections
- * ─────────────────────────────────────────────────────────────
- */
-
 import { relations } from 'drizzle-orm';
-
 import { account, session, user } from './schemas/auth.schema';
+import { brands } from './schemas/brands.schema';
 import { cartItems, carts } from './schemas/carts.schema';
 import { categories } from './schemas/categories.schema';
 import { coupons } from './schemas/coupons.schema';
+import { homeSections } from './schemas/home-sections.schema';
 import { orderItems, orders } from './schemas/orders.schema';
 import { paymentMethods } from './schemas/payment-methods.schema';
 import { productImages } from './schemas/product-images.schema';
 import { productReviews } from './schemas/product-reviews.schema';
 import { productVariants } from './schemas/product-variants.schema';
 import { products } from './schemas/products.schema';
+import { reviewLikes } from './schemas/reviews-likes.schema';
+import { reviewMedia } from './schemas/reviews-media.schema';
 import { userAddresses } from './schemas/user-addresses.schema';
 import { userProfiles } from './schemas/user-profiles.schema';
 import { wishlistItems, wishlists } from './schemas/wishlists.schema';
 
-// ════════════════════════════════════════════════════════════
-//  BETTER AUTH — user
-// ════════════════════════════════════════════════════════════
 export const userRelations = relations(user, ({ one, many }) => ({
-    // Better Auth nativo
     sessions: many(session),
     accounts: many(account),
-    // Extensões da Nero API
     profile: one(userProfiles, {
         fields: [user.id],
         references: [userProfiles.userId],
@@ -47,41 +27,24 @@ export const userRelations = relations(user, ({ one, many }) => ({
     addresses: many(userAddresses),
     paymentMethods: many(paymentMethods),
     wishlists: many(wishlists),
-    cart: one(carts, {
-        fields: [user.id],
-        references: [carts.userId],
-    }),
+    cart: one(carts, { fields: [user.id], references: [carts.userId] }),
     orders: many(orders),
     reviews: many(productReviews),
+    reviewLikes: many(reviewLikes),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
-    user: one(user, {
-        fields: [session.userId],
-        references: [user.id],
-    }),
+    user: one(user, { fields: [session.userId], references: [user.id] }),
 }));
 
 export const accountRelations = relations(account, ({ one }) => ({
-    user: one(user, {
-        fields: [account.userId],
-        references: [user.id],
-    }),
+    user: one(user, { fields: [account.userId], references: [user.id] }),
 }));
 
-// ════════════════════════════════════════════════════════════
-//  PERFIL
-// ════════════════════════════════════════════════════════════
 export const userProfilesRelations = relations(userProfiles, ({ one }) => ({
-    user: one(user, {
-        fields: [userProfiles.userId],
-        references: [user.id],
-    }),
+    user: one(user, { fields: [userProfiles.userId], references: [user.id] }),
 }));
 
-// ════════════════════════════════════════════════════════════
-//  ENDEREÇOS
-// ════════════════════════════════════════════════════════════
 export const userAddressesRelations = relations(
     userAddresses,
     ({ one, many }) => ({
@@ -93,9 +56,6 @@ export const userAddressesRelations = relations(
     }),
 );
 
-// ════════════════════════════════════════════════════════════
-//  MÉTODOS DE PAGAMENTO
-// ════════════════════════════════════════════════════════════
 export const paymentMethodsRelations = relations(
     paymentMethods,
     ({ one, many }) => ({
@@ -107,9 +67,10 @@ export const paymentMethodsRelations = relations(
     }),
 );
 
-// ════════════════════════════════════════════════════════════
-//  CATEGORIAS (self-referencing)
-// ════════════════════════════════════════════════════════════
+export const brandsRelations = relations(brands, ({ many }) => ({
+    products: many(products),
+}));
+
 export const categoriesRelations = relations(categories, ({ one, many }) => ({
     parent: one(categories, {
         fields: [categories.parentId],
@@ -120,10 +81,11 @@ export const categoriesRelations = relations(categories, ({ one, many }) => ({
     products: many(products),
 }));
 
-// ════════════════════════════════════════════════════════════
-//  PRODUTOS
-// ════════════════════════════════════════════════════════════
 export const productsRelations = relations(products, ({ one, many }) => ({
+    brand: one(brands, {
+        fields: [products.brandId],
+        references: [brands.id],
+    }),
     category: one(categories, {
         fields: [products.categoryId],
         references: [categories.id],
@@ -136,9 +98,6 @@ export const productsRelations = relations(products, ({ one, many }) => ({
     orderItems: many(orderItems),
 }));
 
-// ════════════════════════════════════════════════════════════
-//  VARIANTES
-// ════════════════════════════════════════════════════════════
 export const productVariantsRelations = relations(
     productVariants,
     ({ one, many }) => ({
@@ -152,9 +111,6 @@ export const productVariantsRelations = relations(
     }),
 );
 
-// ════════════════════════════════════════════════════════════
-//  IMAGENS
-// ════════════════════════════════════════════════════════════
 export const productImagesRelations = relations(productImages, ({ one }) => ({
     product: one(products, {
         fields: [productImages.productId],
@@ -166,32 +122,46 @@ export const productImagesRelations = relations(productImages, ({ one }) => ({
     }),
 }));
 
-// ════════════════════════════════════════════════════════════
-//  REVIEWS
-// ════════════════════════════════════════════════════════════
-export const productReviewsRelations = relations(productReviews, ({ one }) => ({
-    product: one(products, {
-        fields: [productReviews.productId],
-        references: [products.id],
+export const productReviewsRelations = relations(
+    productReviews,
+    ({ one, many }) => ({
+        product: one(products, {
+            fields: [productReviews.productId],
+            references: [products.id],
+        }),
+        user: one(user, {
+            fields: [productReviews.userId],
+            references: [user.id],
+        }),
+        order: one(orders, {
+            fields: [productReviews.orderId],
+            references: [orders.id],
+        }),
+        media: many(reviewMedia),
+        likes: many(reviewLikes),
     }),
-    user: one(user, {
-        fields: [productReviews.userId],
-        references: [user.id],
-    }),
-    order: one(orders, {
-        fields: [productReviews.orderId],
-        references: [orders.id],
+);
+
+export const reviewMediaRelations = relations(reviewMedia, ({ one }) => ({
+    review: one(productReviews, {
+        fields: [reviewMedia.reviewId],
+        references: [productReviews.id],
     }),
 }));
 
-// ════════════════════════════════════════════════════════════
-//  WISHLIST
-// ════════════════════════════════════════════════════════════
-export const wishlistsRelations = relations(wishlists, ({ one, many }) => ({
+export const reviewLikesRelations = relations(reviewLikes, ({ one }) => ({
+    review: one(productReviews, {
+        fields: [reviewLikes.reviewId],
+        references: [productReviews.id],
+    }),
     user: one(user, {
-        fields: [wishlists.userId],
+        fields: [reviewLikes.userId],
         references: [user.id],
     }),
+}));
+
+export const wishlistsRelations = relations(wishlists, ({ one, many }) => ({
+    user: one(user, { fields: [wishlists.userId], references: [user.id] }),
     items: many(wishlistItems),
 }));
 
@@ -206,22 +176,13 @@ export const wishlistItemsRelations = relations(wishlistItems, ({ one }) => ({
     }),
 }));
 
-// ════════════════════════════════════════════════════════════
-//  CUPONS
-// ════════════════════════════════════════════════════════════
 export const couponsRelations = relations(coupons, ({ many }) => ({
     carts: many(carts),
     orders: many(orders),
 }));
 
-// ════════════════════════════════════════════════════════════
-//  CARRINHO
-// ════════════════════════════════════════════════════════════
 export const cartsRelations = relations(carts, ({ one, many }) => ({
-    user: one(user, {
-        fields: [carts.userId],
-        references: [user.id],
-    }),
+    user: one(user, { fields: [carts.userId], references: [user.id] }),
     coupon: one(coupons, {
         fields: [carts.couponId],
         references: [coupons.id],
@@ -244,9 +205,6 @@ export const cartItemsRelations = relations(cartItems, ({ one }) => ({
     }),
 }));
 
-// ════════════════════════════════════════════════════════════
-//  PEDIDOS
-// ════════════════════════════════════════════════════════════
 export const ordersRelations = relations(orders, ({ one, many }) => ({
     user: one(user, {
         fields: [orders.userId],
@@ -282,3 +240,5 @@ export const orderItemsRelations = relations(orderItems, ({ one }) => ({
         references: [productVariants.id],
     }),
 }));
+
+export const homeSectionsRelations = relations(homeSections, () => ({}));

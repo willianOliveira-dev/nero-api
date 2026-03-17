@@ -1,10 +1,12 @@
-import type { ZodHandler } from '@/types/handlers/root.handler';
-
 import type {
-    SerializedProduct,
-    SerializedVariant,
-} from '../../modules/products/serializers/products.serializer';
-
+    ContextConfigDefault,
+    FastifySchema,
+    RawReplyDefaultExpression,
+    RawRequestDefaultExpression,
+    RawServerDefault,
+    RouteHandlerMethod,
+} from 'fastify';
+import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import type {
     ConfirmProductImageInput,
     CreateProductInput,
@@ -20,104 +22,33 @@ import type {
     VariantParams,
 } from '../../modules/products/validations/products.validation';
 
-export type SearchProductsHandler = ZodHandler<
-    unknown,
-    unknown,
-    SearchProductsInput,
-    {
-        items: SerializedProduct[];
-        total: number;
-        nextCursor: string | null;
-        hasMore: boolean;
-        limit: number;
-    }
+type Handler<TParams = unknown, TBody = unknown, TQuery = unknown> = RouteHandlerMethod<
+    RawServerDefault,
+    RawRequestDefaultExpression,
+    RawReplyDefaultExpression,
+    { Params: TParams; Body: TBody; Querystring: TQuery; Reply: any },
+    ContextConfigDefault,
+    FastifySchema,
+    ZodTypeProvider
 >;
 
-export type GetProductByIdHandler = ZodHandler<
-    ProductParams,
-    unknown,
-    unknown,
-    SerializedProduct
->;
+type ReviewsQuery = { limit: number; cursor?: string };
 
-export type GetProductBySlugHandler = ZodHandler<
-    ProductSlugParams,
-    unknown,
-    unknown,
-    SerializedProduct
->;
+export type SearchProductsHandler    = Handler<unknown, unknown, SearchProductsInput>;
+export type GetProductBySlugHandler  = Handler<ProductSlugParams>;
+export type GetProductByIdHandler    = Handler<ProductParams>;
+export type GetProductReviewsHandler = Handler<ProductParams, unknown, ReviewsQuery>;
+export type ListVariantsHandler      = Handler<ProductParams>;
+export type ListImagesHandler        = Handler<ProductParams>;
 
-export type CreateProductHandler = ZodHandler<
-    unknown,
-    CreateProductInput,
-    unknown,
-    SerializedProduct
->;
-
-export type UpdateProductHandler = ZodHandler<
-    ProductParams,
-    UpdateProductInput,
-    unknown,
-    SerializedProduct
->;
-
-export type ArchiveProductHandler = ZodHandler<
-    ProductParams,
-    unknown,
-    unknown,
-    SerializedProduct
->;
-
-export type ListVariantsHandler = ZodHandler<
-    ProductParams,
-    unknown,
-    unknown,
-    SerializedVariant[]
->;
-
-export type CreateVariantHandler = ZodHandler<
-    ProductParams,
-    CreateVariantInput,
-    unknown,
-    SerializedVariant
->;
-
-export type UpdateVariantHandler = ZodHandler<
-    VariantParams,
-    UpdateVariantInput,
-    unknown,
-    SerializedVariant
->;
-
-export type ListImagesHandler = ZodHandler<
-    ProductParams,
-    unknown
->;
-
-export type PresignImageHandler = ZodHandler<
-    ProductParams
->;
-
-export type ConfirmImageHandler = ZodHandler<
-    ProductParams,
-    ConfirmProductImageInput
->;
-
-export type UpdateImageHandler = ZodHandler<
-    ImageParams,
-    UpdateProductImageInput
->;
-
-export type DeleteImageHandler = ZodHandler<
-    ImageParams,
-    unknown,
-    unknown,
-    { deleted: boolean }
->;
-
-export type ReorderImagesHandler = ZodHandler<
-    ProductParams,
-    ReorderImagesInput,
-    unknown,
-    { reordered: boolean }
->;
+// Admin
+export type CreateProductHandler  = Handler<unknown, CreateProductInput>;
+export type UpdateProductHandler  = Handler<ProductParams, UpdateProductInput>;
+export type ArchiveProductHandler = Handler<ProductParams>;
+export type CreateVariantHandler  = Handler<ProductParams, CreateVariantInput>;
+export type UpdateVariantHandler  = Handler<VariantParams, UpdateVariantInput>;
+export type PresignImageHandler   = Handler<ProductParams>;
+export type ConfirmImageHandler   = Handler<ProductParams, ConfirmProductImageInput>;
+export type UpdateImageHandler    = Handler<ImageParams, UpdateProductImageInput>;
+export type DeleteImageHandler    = Handler<ImageParams>;
+export type ReorderImagesHandler  = Handler<ProductParams, ReorderImagesInput>;

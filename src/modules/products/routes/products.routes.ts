@@ -1,6 +1,22 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { ProductsController } from '../controllers/products.controller';
+import {
+    archiveProductHandler,
+    confirmImageHandler,
+    createProductHandler,
+    createVariantHandler,
+    deleteImageHandler,
+    getProductByIdHandler,
+    getProductBySlugHandler,
+    listImagesHandler,
+    listVariantsHandler,
+    presignImageHandler,
+    reorderImagesHandler,
+    searchProductsHandler,
+    updateImageHandler,
+    updateProductHandler,
+    updateVariantHandler,
+} from '../handlers/products.handlers';
 import {
     confirmProductImageSchema,
     createProductSchema,
@@ -16,8 +32,6 @@ import {
     variantParamsSchema,
 } from '../validations/products.validation';
 
-const controller = new ProductsController();
-
 const priceOutputSchema = z.object({
     cents: z.number(),
     value: z.number(),
@@ -29,17 +43,110 @@ const productPriceSchema = z.object({
     original: priceOutputSchema.nullable(),
     discountPercent: z.number().nullable(),
 });
-const variantSchema = z.object({
+
+const productCardSchema = z.object({
+    id: z.string().uuid(),
+    name: z.string(),
+    slug: z.string(),
+    price: productPriceSchema,
+    brand: z.object({
+        name: z.string(),
+        slug: z.string(),
+    }).nullable(),
+    rating: z.object({
+        average: z.number(),
+        count: z.number(),
+    }),
+    imageUrl: z.string().url().nullable(),
+    freeShipping: z.boolean(),
+});
+
+const productDetailSchema = z.object({
+    id: z.string().uuid(),
+    name: z.string(),
+    slug: z.string(),
+    description: z.string().nullable(),
+    status: z.string(),
+    price: productPriceSchema,
+    brand: z.object({
+        name: z.string(),
+        slug: z.string(),
+        logo: z.string().nullable(),
+    }).nullable(),
+    categories: z.array(z.object({
+        name: z.string(),
+        slug: z.string(),
+    })),
+    images: z.array(z.object({
+        id: z.string().uuid(),
+        url: z.string().url(),
+        alt: z.string().nullable(),
+        isPrimary: z.boolean(),
+    })),
+    variants: z.array(z.object({
+        id: z.string().uuid(),
+        sku: z.string(),
+        stock: z.number(),
+        attributes: z.record(z.string(), z.unknown()),
+        price: productPriceSchema,
+        images: z.array(z.object({
+            id: z.string().uuid(),
+            url: z.string().url(),
+            alt: z.string().nullable(),
+        })),
+    })),
+    rating: z.object({
+        average: z.number(),
+        count: z.number(),
+        sold: z.number(),
+    }),
+    features: z.object({
+        freeShipping: z.boolean(),
+        gender: z.string(),
+        sizeChart: z.string().nullable(),
+    }),
+    userContext: z.object({
+        isWishlisted: z.boolean(),
+    }),
+});
+
+// Full product record (admin responses)
+const productRawSchema = z.object({
+    id: z.string().uuid(),
+    name: z.string(),
+    slug: z.string(),
+    description: z.string().nullable(),
+    basePrice: z.number(),
+    originalPrice: z.number().nullable(),
+    gender: z.enum(['men', 'women', 'kids', 'unisex']),
+    status: z.enum(['draft', 'active', 'archived']),
+    freeShipping: z.boolean(),
+    soldCount: z.number(),
+    ratingAvg: z.string().nullable(),
+    ratingCount: z.number(),
+    sizeChartUrl: z.string().nullable(),
+    categoryId: z.string().uuid().nullable(),
+    brandId: z.string().uuid().nullable(),
+    createdAt: z.date(),
+    updatedAt: z.date(),
+});
+
+const variantRawSchema = z.object({
     id: z.string().uuid(),
     productId: z.string().uuid(),
     sku: z.string(),
-    price: priceOutputSchema.nullable(),
+    gtin: z.string().nullable(),
+    price: z.number().nullable(),
     stock: z.number(),
-    attributes: z.record(z.string(), z.string()),
+    attributes: z.record(z.string(), z.unknown()),
     isActive: z.boolean(),
+    weightInGrams: z.number().nullable(),
+    lengthCm: z.string().nullable(),
+    widthCm: z.string().nullable(),
+    heightCm: z.string().nullable(),
 });
 
-const imageSchema = z.object({
+const imageRawSchema = z.object({
     id: z.string().uuid(),
     productId: z.string().uuid(),
     variantId: z.string().uuid().nullable(),
@@ -49,31 +156,7 @@ const imageSchema = z.object({
     isPrimary: z.boolean(),
 });
 
-const productSchema = z.object({
-    id: z.string().uuid(),
-    name: z.string(),
-    slug: z.string(),
-    description: z.string().nullable(),
-    price: productPriceSchema,
-    gender: z.enum(['men', 'women', 'kids', 'unisex']),
-    status: z.enum(['draft', 'active', 'archived']),
-    freeShipping: z.boolean(),
-    isFeatured: z.boolean(),
-    soldCount: z.number(),
-    ratingAvg: z.number().nullable(),
-    ratingCount: z.number(),
-    categoryId: z.string().uuid().nullable(),
-    category: z.unknown().nullable(),
-    variants: z.array(variantSchema).optional(),
-    images: z.array(imageSchema).optional(),
-    createdAt: z.date(),
-    updatedAt: z.date(),
-});
-
 export const productsRoutes: FastifyPluginAsyncZod = async (app) => {
-    
-    // ── Rotas públicas ──────────────────────────────────────────
-
     app.get('/products/search', {
         schema: {
             tags: ['Products'],
@@ -82,37 +165,36 @@ export const productsRoutes: FastifyPluginAsyncZod = async (app) => {
             querystring: searchProductsSchema,
             response: {
                 200: z.object({
-                    items: z.array(productSchema),
+                    items: z.array(productCardSchema),
                     total: z.number(),
                     nextCursor: z.string().uuid().nullable(),
                     hasMore: z.boolean(),
-                    limit: z.number(),
                 }),
             },
         },
-        handler: controller.search,
+        handler: searchProductsHandler,
     });
 
     app.get('/products/slug/:slug', {
         schema: {
             tags: ['Products'],
-            summary: 'Produto por slug (canonical URL)',
+            summary: 'Detalhe do produto por slug — PDP',
             operationId: 'getProductBySlug',
             params: productSlugParamsSchema,
-            response: { 200: productSchema },
+            response: { 200: productDetailSchema },
         },
-        handler: controller.getBySlug,
+        handler: getProductBySlugHandler,
     });
 
     app.get('/products/:id', {
         schema: {
             tags: ['Products'],
-            summary: 'Detalhe do produto com variantes e imagens',
+            summary: 'Produto por ID (uso interno/admin)',
             operationId: 'getProductById',
             params: productParamsSchema,
-            response: { 200: productSchema },
+            response: { 200: productCardSchema },
         },
-        handler: controller.getById,
+        handler: getProductByIdHandler,
     });
 
     app.get('/products/:id/variants', {
@@ -121,9 +203,9 @@ export const productsRoutes: FastifyPluginAsyncZod = async (app) => {
             summary: 'Listar variantes do produto',
             operationId: 'listProductVariants',
             params: productParamsSchema,
-            response: { 200: z.array(variantSchema) },
+            response: { 200: z.array(z.unknown()) }, // Simplified for now, can be expanded if needed
         },
-        handler: controller.listVariants,
+        handler: listVariantsHandler,
     });
 
     app.get('/products/:id/images', {
@@ -132,12 +214,10 @@ export const productsRoutes: FastifyPluginAsyncZod = async (app) => {
             summary: 'Listar galeria de imagens',
             operationId: 'listProductImages',
             params: productParamsSchema,
-            response: { 200: z.array(imageSchema) },
+            response: { 200: z.array(imageRawSchema) },
         },
-        handler: controller.listImages,
+        handler: listImagesHandler,
     });
-
-    // ── Rotas admin ─────────────────────────────────────────────
 
     app.post('/admin/products', {
         schema: {
@@ -145,10 +225,10 @@ export const productsRoutes: FastifyPluginAsyncZod = async (app) => {
             summary: 'Criar produto (admin)',
             operationId: 'createProduct',
             body: createProductSchema,
-            response: { 201: productSchema },
+            response: { 201: productRawSchema },
         },
         preHandler: [app.authenticate],
-        handler: controller.create,
+        handler: createProductHandler,
     });
 
     app.patch('/admin/products/:id', {
@@ -158,22 +238,22 @@ export const productsRoutes: FastifyPluginAsyncZod = async (app) => {
             operationId: 'updateProduct',
             params: productParamsSchema,
             body: updateProductSchema,
-            response: { 200: productSchema },
+            response: { 200: productRawSchema },
         },
         preHandler: [app.authenticate],
-        handler: controller.update,
+        handler: updateProductHandler,
     });
 
     app.delete('/admin/products/:id', {
         schema: {
             tags: ['Products'],
-            summary: 'Arquivar produto — soft delete (admin)',
+            summary: 'Arquivar produto (admin)',
             operationId: 'archiveProduct',
             params: productParamsSchema,
-            response: { 200: productSchema },
+            response: { 200: productRawSchema },
         },
         preHandler: [app.authenticate],
-        handler: controller.archive,
+        handler: archiveProductHandler,
     });
 
     app.post('/admin/products/:id/variants', {
@@ -183,10 +263,10 @@ export const productsRoutes: FastifyPluginAsyncZod = async (app) => {
             operationId: 'createVariant',
             params: productParamsSchema,
             body: createVariantSchema,
-            response: { 201: variantSchema },
+            response: { 201: variantRawSchema },
         },
         preHandler: [app.authenticate],
-        handler: controller.createVariant,
+        handler: createVariantHandler,
     });
 
     app.patch('/admin/products/:id/variants/:vid', {
@@ -196,16 +276,16 @@ export const productsRoutes: FastifyPluginAsyncZod = async (app) => {
             operationId: 'updateVariant',
             params: variantParamsSchema,
             body: updateVariantSchema,
-            response: { 200: variantSchema },
+            response: { 200: variantRawSchema },
         },
         preHandler: [app.authenticate],
-        handler: controller.updateVariant,
+        handler: updateVariantHandler,
     });
 
     app.post('/admin/products/:id/images/presign', {
         schema: {
             tags: ['Products'],
-            summary: 'Gerar assinatura Cloudinary para imagem (admin)',
+            summary: 'Gerar assinatura Cloudinary (admin)',
             operationId: 'presignProductImage',
             params: productParamsSchema,
             response: {
@@ -220,20 +300,20 @@ export const productsRoutes: FastifyPluginAsyncZod = async (app) => {
             },
         },
         preHandler: [app.authenticate],
-        handler: controller.presignImage,
+        handler: presignImageHandler,
     });
 
     app.post('/admin/products/:id/images', {
         schema: {
             tags: ['Products'],
-            summary: 'Confirmar imagem após upload no Cloudinary (admin)',
+            summary: 'Confirmar imagem após upload (admin)',
             operationId: 'confirmProductImage',
             params: productParamsSchema,
             body: confirmProductImageSchema,
-            response: { 201: imageSchema },
+            response: { 201: imageRawSchema },
         },
         preHandler: [app.authenticate],
-        handler: controller.confirmImage,
+        handler: confirmImageHandler,
     });
 
     app.patch('/admin/products/:id/images/:iid', {
@@ -243,10 +323,10 @@ export const productsRoutes: FastifyPluginAsyncZod = async (app) => {
             operationId: 'updateProductImage',
             params: imageParamsSchema,
             body: updateProductImageSchema,
-            response: { 200: imageSchema },
+            response: { 200: imageRawSchema },
         },
         preHandler: [app.authenticate],
-        handler: controller.updateImage,
+        handler: updateImageHandler,
     });
 
     app.delete('/admin/products/:id/images/:iid', {
@@ -255,12 +335,10 @@ export const productsRoutes: FastifyPluginAsyncZod = async (app) => {
             summary: 'Remover imagem (admin)',
             operationId: 'deleteProductImage',
             params: imageParamsSchema,
-            response: {
-                200: z.object({ deleted: z.boolean() }),
-            },
+            response: { 200: z.object({ deleted: z.boolean() }) },
         },
         preHandler: [app.authenticate],
-        handler: controller.deleteImage,
+        handler: deleteImageHandler,
     });
 
     app.post('/admin/products/:id/images/reorder', {
@@ -270,11 +348,9 @@ export const productsRoutes: FastifyPluginAsyncZod = async (app) => {
             operationId: 'reorderProductImages',
             params: productParamsSchema,
             body: reorderImagesSchema,
-            response: {
-                200: z.object({ reordered: z.boolean() }),
-            },
+            response: { 200: z.object({ reordered: z.boolean() }) },
         },
         preHandler: [app.authenticate],
-        handler: controller.reorderImages,
+        handler: reorderImagesHandler,
     });
 };

@@ -1,6 +1,11 @@
 import { StorageService } from '@/modules/storage/services/storage.service';
 import { ConflictError, NotFoundError } from '@/shared/errors/app.error';
 import { ProductsRepository } from '../repositories/products.repository';
+import {
+    serializeProductCard,
+    serializeProductDetail,
+    serializeProductList,
+} from '../serializers/products.serializer';
 import type {
     ConfirmProductImageInput,
     CreateProductInput,
@@ -16,24 +21,32 @@ const productsRepository = new ProductsRepository();
 const storageService = new StorageService();
 
 export class ProductsService {
+    async getBySlug(slug: string, userId?: string) {
+        const result = await productsRepository.findBySlug(slug, userId);
+        if (!result) {
+            throw new NotFoundError('Produto não encontrado.');
+        }
+
+        const { isWishlisted, ...product } = result;
+        return serializeProductDetail(product, isWishlisted);
+    }
+
+    async search(filters: SearchProductsInput) {
+        const result = await productsRepository.search(filters);
+        return {
+            items: serializeProductList(result.data),
+            total: result.total,
+            nextCursor: result.nextCursor,
+            hasMore: result.hasMore,
+        };
+    }
+
     async getById(id: string) {
         const product = await productsRepository.findById(id);
         if (!product) {
             throw new NotFoundError('Produto não encontrado.');
         }
-        return product;
-    }
-
-    async getBySlug(slug: string) {
-        const product = await productsRepository.findBySlug(slug);
-        if (!product) {
-            throw new NotFoundError('Produto não encontrado.');
-        }
-        return product;
-    }
-
-    async search(filters: SearchProductsInput) {
-        return productsRepository.search(filters);
+        return serializeProductCard(product);
     }
 
     async create(input: CreateProductInput) {
@@ -41,48 +54,30 @@ export class ProductsService {
     }
 
     async update(id: string, input: UpdateProductInput) {
-        const existing = await productsRepository.findById(id);
-        if (!existing) {
-            throw new NotFoundError('Produto não encontrado.');
-        }
-
+        await this.findOrFail(id);
         const updated = await productsRepository.update(id, input);
         if (!updated) {
             throw new NotFoundError('Produto não encontrado.');
         }
-
         return updated;
     }
 
     async archive(id: string) {
-        const existing = await productsRepository.findById(id);
-        if (!existing) {
-            throw new NotFoundError('Produto não encontrado.');
-        }
-
+        await this.findOrFail(id);
         const updated = await productsRepository.archive(id);
         if (!updated) {
             throw new NotFoundError('Produto não encontrado.');
         }
-
         return updated;
     }
 
     async listVariants(productId: string) {
-        const product = await productsRepository.findById(productId);
-        if (!product) {
-            throw new NotFoundError('Produto não encontrado.');
-        }
-
+        await this.findOrFail(productId);
         return productsRepository.findVariantsByProductId(productId);
     }
 
     async createVariant(productId: string, input: CreateVariantInput) {
-        const product = await productsRepository.findById(productId);
-        if (!product) {
-            throw new NotFoundError('Produto não encontrado.');
-        }
-
+        await this.findOrFail(productId);
         return productsRepository.createVariant(productId, input);
     }
 
@@ -91,10 +86,7 @@ export class ProductsService {
         variantId: string,
         input: UpdateVariantInput,
     ) {
-        const product = await productsRepository.findById(productId);
-        if (!product) {
-            throw new NotFoundError('Produto não encontrado.');
-        }
+        await this.findOrFail(productId);
 
         const variant = await productsRepository.findVariantById(variantId);
         if (!variant || variant.productId !== productId) {
@@ -112,25 +104,13 @@ export class ProductsService {
         return updated;
     }
 
-    // ── Images ────────────────────────────────────────────────
-
     async listImages(productId: string) {
-        const product = await productsRepository.findById(productId);
-        if (!product) {
-            throw new NotFoundError('Produto não encontrado.');
-        }
-
+        await this.findOrFail(productId);
         return productsRepository.findImagesByProductId(productId);
     }
 
-    /**
-     * Gera assinatura Cloudinary para upload direto de imagem de produto.
-     */
     async presignImage(productId: string) {
-        const product = await productsRepository.findById(productId);
-        if (!product) {
-            throw new NotFoundError('Produto não encontrado.');
-        }
+        await this.findOrFail(productId);
 
         const count = await productsRepository.countImagesByProductId(
             productId,
@@ -140,20 +120,15 @@ export class ProductsService {
                 'Limite de 5 imagens por produto atingido.',
             );
         }
+
         return storageService.generateUploadSignature(
             'products',
             `product_${productId}_${Date.now()}`,
         );
     }
 
-    /**
-     * Salva imagem após upload confirmado pelo Cloudinary.
-     */
     async confirmImage(productId: string, input: ConfirmProductImageInput) {
-        const product = await productsRepository.findById(productId);
-        if (!product) {
-            throw new NotFoundError('Produto não encontrado.');
-        }
+        await this.findOrFail(productId);
 
         const count = await productsRepository.countImagesByProductId(
             productId,
@@ -176,7 +151,6 @@ export class ProductsService {
             productId,
         );
         const image = images.find((i) => i.id === imageId);
-
         if (!image) {
             throw new NotFoundError('Imagem não encontrada.');
         }
@@ -194,7 +168,6 @@ export class ProductsService {
             productId,
         );
         const image = images.find((i) => i.id === imageId);
-
         if (!image) {
             throw new NotFoundError('Imagem não encontrada.');
         }
@@ -205,18 +178,20 @@ export class ProductsService {
         }
 
         await productsRepository.deleteImage(imageId);
-
         return { deleted: true };
     }
 
     async reorderImages(productId: string, input: ReorderImagesInput) {
-        const product = await productsRepository.findById(productId);
+        await this.findOrFail(productId);
+        await productsRepository.reorderImages(input.items);
+        return { reordered: true };
+    }
+
+    private async findOrFail(id: string) {
+        const product = await productsRepository.findById(id);
         if (!product) {
             throw new NotFoundError('Produto não encontrado.');
         }
-
-        await productsRepository.reorderImages(input.items);
-
-        return { reordered: true };
+        return product;
     }
 }
