@@ -6,11 +6,10 @@ import type {
 } from 'fastify';
 import fp from 'fastify-plugin';
 import { AppError } from '@/shared/errors/app.error';
-import { formatError } from '@/shared/utils/response.util';
 
 function handleValidationError(
   error: FastifyError,
-  request: FastifyRequest,
+  _request: FastifyRequest,
   reply: FastifyReply,
 ) {
   const issues = error.validation?.map((v) => ({
@@ -20,11 +19,11 @@ function handleValidationError(
     message: v.message ?? 'Erro de validação',
   }));
 
-  return reply.status(400).send(
-    formatError(request.method, 'Dados inválidos', 400, 'VALIDATION_ERROR', {
-      issues: issues ?? [],
-    }),
-  );
+  return reply.status(400).send({
+    code: 'VALIDATION_ERROR',
+    message: 'Dados inválidos',
+    details: { issues: issues ?? [] },
+  });
 }
 
 function handleAppError(
@@ -44,17 +43,11 @@ function handleAppError(
     });
   }
 
-  return reply
-    .status(error.statusCode)
-    .send(
-      formatError(
-        request.method,
-        error.message,
-        error.statusCode,
-        error.code,
-        error.details,
-      ),
-    );
+  return reply.status(error.statusCode).send({
+    code: error.code,
+    message: error.message,
+    details: error.details,
+  });
 }
 
 function handleFastifyError(
@@ -75,28 +68,16 @@ function handleFastifyError(
       { err: error, req: request.id },
       'Schema/DB mismatch on response',
     );
-    return reply
-      .status(500)
-      .send(
-        formatError(
-          request.method,
-          'Erro interno do servidor',
-          500,
-          'INTERNAL_SERVER_ERROR',
-        ),
-      );
+    return reply.status(500).send({
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'Erro interno do servidor',
+    });
   }
 
-  return reply
-    .status(error.statusCode!)
-    .send(
-      formatError(
-        request.method,
-        error.message,
-        error.statusCode || 500,
-        error.code ?? 'FASTIFY_ERROR',
-      ),
-    );
+  return reply.status(error.statusCode!).send({
+    code: error.code ?? 'FASTIFY_ERROR',
+    message: error.message,
+  });
 }
 
 export default fp(
@@ -116,16 +97,10 @@ export default fp(
 
       app.log.error({ err: error, req: request.id }, 'Unhandled error');
 
-      return reply
-        .status(500)
-        .send(
-          formatError(
-            request.method,
-            'Erro interno do servidor',
-            500,
-            'INTERNAL_SERVER_ERROR',
-          ),
-        );
+      return reply.status(500).send({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Erro interno do servidor',
+      });
     });
   },
   {
