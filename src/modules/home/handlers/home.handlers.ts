@@ -11,8 +11,9 @@ import type {
 
 const homeService = new HomeService();
 
-export const getHomeHandler: GetHomeHandler = async (_request, reply) => {
-    const sections = await homeService.getHome();
+export const getHomeHandler: GetHomeHandler = async (request, reply) => {
+    const { gender } = request.query;
+    const sections = await homeService.getHome(gender);
     return reply.status(200).send(sections);
 };
 

@@ -1,8 +1,8 @@
-import { and, desc, eq, gte, isNotNull, type SQL } from 'drizzle-orm';
+import { and, desc, eq, gte, isNotNull, inArray, type SQL } from 'drizzle-orm';
 import { db } from '@/lib/db/connection';
-import { productImages, products } from '@/lib/db/schemas/index.schema';
+import { productImages, productSkus, products } from '@/lib/db/schemas/index.schema';
 import { NotFoundError } from '@/shared/errors/app.error';
-import { Price } from '@/shared/utils/price.util';
+import { serializeProductCard } from '@/modules/products/serializers/products.serializer';
 import { HomeRepository } from '../repositories/home.repository';
 import type {
     CreateHomeSectionInput,
@@ -22,11 +22,11 @@ type SectionFilterJson = {
 type RawSection = Awaited<ReturnType<HomeRepository['findAllActive']>>[number];
 
 export class HomeService {
-    async getHome() {
+    async getHome(genderQuery?: string) {
         const sections = await homeRepository.findAllActive();
 
         const resolved = await Promise.all(
-            sections.map((section) => this.resolveSection(section)),
+            sections.map((section) => this.resolveSection(section, genderQuery)),
         );
 
         return resolved;
@@ -81,7 +81,7 @@ export class HomeService {
      * Resolve o conteúdo de uma seção baseado no seu type.
      * category_list e banner retornam items vazio por ora.
      */
-    private async resolveSection(section: RawSection) {
+    private async resolveSection(section: RawSection, globalGender?: string) {
         const type = section.type as SectionType;
         const filter = (section.filterJson ?? {}) as SectionFilterJson;
 
@@ -94,7 +94,7 @@ export class HomeService {
         ];
 
         if (productListTypes.includes(type)) {
-            const items = await this.resolveProductList(type, filter);
+            const items = await this.resolveProductList(type, filter, globalGender);
             return { ...section, items };
         }
 
@@ -110,11 +110,16 @@ export class HomeService {
     private async resolveProductList(
         type: SectionType,
         filter: SectionFilterJson,
+        globalGender?: string,
     ) {
         const limit = filter.limit ?? 10;
 
         const baseCondition = eq(products.status, 'active');
         const conditions = [baseCondition];
+
+        if (globalGender && globalGender !== 'unisex') {
+            conditions.push(inArray(products.gender, [globalGender as any, 'unisex']));
+        }
 
         let orderBy: SQL<unknown>[];
 
@@ -133,7 +138,7 @@ export class HomeService {
             }
 
             case 'on_sale':
-                conditions.push(isNotNull(products.originalPrice));
+                conditions.push(isNotNull(products.compareAtPrice));
                 orderBy = [desc(products.soldCount)];
                 break;
 
@@ -143,8 +148,8 @@ export class HomeService {
                 break;
 
             case 'by_gender':
-                if (filter.gender) {
-                    conditions.push(eq(products.gender, filter.gender));
+                if (filter.gender && filter.gender !== 'unisex') {
+                    conditions.push(inArray(products.gender, [filter.gender as any, 'unisex']));
                 }
                 orderBy = [desc(products.soldCount), desc(products.ratingAvg)];
                 break;
@@ -158,26 +163,20 @@ export class HomeService {
             orderBy,
             limit,
             with: {
+                brand: {
+                    columns: { id: true, name: true, slug: true, logoUrl: true },
+                },
                 images: {
                     where: eq(productImages.isPrimary, true),
                     limit: 1,
                 },
+                skus: {
+                    where: eq(productSkus.isActive, true),
+                    columns: { price: true, isActive: true },
+                },
             },
         });
 
-        return rows.map((product) => ({
-            id: product.id,
-            name: product.name,
-            slug: product.slug,
-            price: Price.toProductOutput(
-                product.basePrice,
-                product.originalPrice,
-            ),
-            freeShipping: product.freeShipping,
-            ratingAvg: product.ratingAvg ? Number(product.ratingAvg) : null,
-            ratingCount: product.ratingCount,
-            soldCount: product.soldCount,
-            imageUrl: product.images?.[0]?.url ?? null,
-        }));
+        return rows.map((product) => serializeProductCard(product as any));
     }
 }

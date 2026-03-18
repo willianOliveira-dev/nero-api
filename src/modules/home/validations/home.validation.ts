@@ -73,3 +73,8 @@ export type CreateHomeSectionInput   = z.infer<typeof createHomeSectionSchema>;
 export type UpdateHomeSectionInput   = z.infer<typeof updateHomeSectionSchema>;
 export type ReorderHomeSectionsInput = z.infer<typeof reorderHomeSectionsSchema>;
 export type SectionType              = z.infer<typeof sectionTypeEnum>;
+
+export const getHomeQuerySchema = z.object({
+	gender: z.enum(['men', 'women', 'kids', 'unisex']).optional(),
+});
+export type GetHomeQuery = z.infer<typeof getHomeQuerySchema>;

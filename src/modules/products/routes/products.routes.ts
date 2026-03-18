@@ -1,356 +1,361 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import {
-    archiveProductHandler,
-    confirmImageHandler,
-    createProductHandler,
-    createVariantHandler,
-    deleteImageHandler,
-    getProductByIdHandler,
-    getProductBySlugHandler,
-    listImagesHandler,
-    listVariantsHandler,
-    presignImageHandler,
-    reorderImagesHandler,
-    searchProductsHandler,
-    updateImageHandler,
-    updateProductHandler,
-    updateVariantHandler,
+	archiveProductHandler,
+	confirmImageHandler,
+	createProductHandler,
+	deleteImageHandler,
+	getProductByIdHandler,
+	getProductBySlugHandler,
+	listImagesHandler,
+	presignImageHandler,
+	reorderImagesHandler,
+	searchProductsHandler,
+	updateImageHandler,
+	updateProductHandler,
+	updateSkuHandler,
 } from '../handlers/products.handlers';
 import {
-    confirmProductImageSchema,
-    createProductSchema,
-    createVariantSchema,
-    imageParamsSchema,
-    productParamsSchema,
-    productSlugParamsSchema,
-    reorderImagesSchema,
-    searchProductsSchema,
-    updateProductImageSchema,
-    updateProductSchema,
-    updateVariantSchema,
-    variantParamsSchema,
+	confirmProductImageSchema,
+	createProductSchema,
+	imageParamsSchema,
+	productParamsSchema,
+	productSlugParamsSchema,
+	reorderImagesSchema,
+	searchProductsSchema,
+	skuParamsSchema,
+	updateProductImageSchema,
+	updateProductSchema,
+	updateSkuSchema,
 } from '../validations/products.validation';
 
 const priceOutputSchema = z.object({
-    cents: z.number(),
-    value: z.number(),
-    formatted: z.string(),
+	cents: z.number(),
+	value: z.number(),
+	formatted: z.string(),
 });
 
-const productPriceSchema = z.object({
-    current: priceOutputSchema,
-    original: priceOutputSchema.nullable(),
-    discountPercent: z.number().nullable(),
+const productPriceOutputSchema = z.object({
+	current: priceOutputSchema,
+	original: priceOutputSchema.nullable(),
+	discountPercent: z.number().nullable(),
+});
+
+const pricingSchema = z
+	.object({
+		displayPriceMin: priceOutputSchema,
+		displayPriceMax: priceOutputSchema,
+		priceRange: z.string(),
+		hasPriceVariation: z.boolean(),
+	})
+	.nullable();
+
+const simpleProductSchema = z
+	.object({
+		price: productPriceOutputSchema,
+		stock: z.number(),
+		skuCode: z.string(),
+		ean: z.string().nullable(),
+		isOutOfStock: z.boolean(),
+	})
+	.nullable();
+
+const variationOptionOutputSchema = z.object({
+	id: z.string(),
+	value: z.string(),
+	imageUrl: z.string().nullable(),
+	position: z.number(),
+});
+
+const variationTypeOutputSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	position: z.number(),
+	hasImage: z.boolean(),
+	options: z.array(variationOptionOutputSchema),
+});
+
+const skuOutputSchema = z.object({
+	id: z.string(),
+	optionIds: z.array(z.string()),
+	optionLabels: z.record(z.string(), z.string()),
+	price: priceOutputSchema,
+	compareAtPrice: priceOutputSchema.nullable(),
+	discountPercent: z.number().nullable(),
+	stock: z.number(),
+	skuCode: z.string(),
+	ean: z.string().nullable(),
+	isOutOfStock: z.boolean(),
+	isActive: z.boolean(),
+});
+
+const cartRulesSchema = z.object({
+	maxQuantityPerSku: z.string(),
+	outOfStockBehavior: z.string(),
+});
+
+const brandSchema = z
+	.object({
+		name: z.string(),
+		slug: z.string(),
+		logo: z.string().nullable().optional(),
+	})
+	.nullable();
+
+const ratingSchema = z.object({
+	average: z.number(),
+	count: z.number(),
+	sold: z.number(),
+});
+
+const categoryBreadcrumbSchema = z.object({
+	name: z.string(),
+	slug: z.string(),
 });
 
 const productCardSchema = z.object({
-    id: z.string().uuid(),
-    name: z.string(),
-    slug: z.string(),
-    price: productPriceSchema,
-    brand: z.object({
-        name: z.string(),
-        slug: z.string(),
-    }).nullable(),
-    rating: z.object({
-        average: z.number(),
-        count: z.number(),
-    }),
-    imageUrl: z.string().url().nullable(),
-    freeShipping: z.boolean(),
+	id: z.string(),
+	name: z.string(),
+	slug: z.string(),
+	status: z.string(),
+	thumbnailUrl: z.string().nullable(),
+	hasVariations: z.boolean(),
+	pricing: z
+		.object({
+			displayPriceMin: priceOutputSchema,
+			priceRange: z.string(),
+			hasPriceVariation: z.boolean(),
+		})
+		.nullable(),
+	brand: brandSchema,
+	rating: ratingSchema,
+	freeShipping: z.boolean(),
+});
+
+const productListSchema = z.object({
+	items: z.array(productCardSchema),
+	total: z.number(),
+	nextCursor: z.string().nullable(),
+	hasMore: z.boolean(),
 });
 
 const productDetailSchema = z.object({
-    id: z.string().uuid(),
-    name: z.string(),
-    slug: z.string(),
-    description: z.string().nullable(),
-    status: z.string(),
-    price: productPriceSchema,
-    brand: z.object({
-        name: z.string(),
-        slug: z.string(),
-        logo: z.string().nullable(),
-    }).nullable(),
-    categories: z.array(z.object({
-        name: z.string(),
-        slug: z.string(),
-    })),
-    images: z.array(z.object({
-        id: z.string().uuid(),
-        url: z.string().url(),
-        alt: z.string().nullable(),
-        isPrimary: z.boolean(),
-    })),
-    variants: z.array(z.object({
-        id: z.string().uuid(),
-        sku: z.string(),
-        stock: z.number(),
-        attributes: z.record(z.string(), z.unknown()),
-        price: productPriceSchema,
-        images: z.array(z.object({
-            id: z.string().uuid(),
-            url: z.string().url(),
-            alt: z.string().nullable(),
-        })),
-    })),
-    rating: z.object({
-        average: z.number(),
-        count: z.number(),
-        sold: z.number(),
-    }),
-    features: z.object({
-        freeShipping: z.boolean(),
-        gender: z.string(),
-        sizeChart: z.string().nullable(),
-    }),
-    userContext: z.object({
-        isWishlisted: z.boolean(),
-    }),
+	id: z.string(),
+	name: z.string(),
+	slug: z.string(),
+	description: z.string().nullable(),
+	status: z.string(),
+	thumbnailUrl: z.string().nullable(),
+	hasVariations: z.boolean(),
+	simpleProduct: simpleProductSchema,
+	pricing: pricingSchema,
+	variationTypes: z.array(variationTypeOutputSchema).nullable(),
+	skus: z.array(skuOutputSchema).nullable(),
+	cartRules: cartRulesSchema,
+	brand: brandSchema,
+	categories: z.array(categoryBreadcrumbSchema),
+	images: z.array(
+		z.object({
+			id: z.string(),
+			url: z.string(),
+			alt: z.string().nullable(),
+			isPrimary: z.boolean(),
+		}),
+	),
+	rating: ratingSchema,
+	features: z.object({
+		freeShipping: z.boolean(),
+		gender: z.string(),
+		sizeChart: z.string().nullable(),
+	}),
+	userContext: z.object({
+		isWishlisted: z.boolean(),
+	}),
 });
 
-// Full product record (admin responses)
-const productRawSchema = z.object({
-    id: z.string().uuid(),
-    name: z.string(),
-    slug: z.string(),
-    description: z.string().nullable(),
-    basePrice: z.number(),
-    originalPrice: z.number().nullable(),
-    gender: z.enum(['men', 'women', 'kids', 'unisex']),
-    status: z.enum(['draft', 'active', 'archived']),
-    freeShipping: z.boolean(),
-    soldCount: z.number(),
-    ratingAvg: z.string().nullable(),
-    ratingCount: z.number(),
-    sizeChartUrl: z.string().nullable(),
-    categoryId: z.string().uuid().nullable(),
-    brandId: z.string().uuid().nullable(),
-    createdAt: z.date(),
-    updatedAt: z.date(),
+const imageSchema = z.object({
+	id: z.string(),
+	productId: z.string(),
+	url: z.string(),
+	altText: z.string().nullable(),
+	position: z.number(),
+	isPrimary: z.boolean(),
 });
 
-const variantRawSchema = z.object({
-    id: z.string().uuid(),
-    productId: z.string().uuid(),
-    sku: z.string(),
-    gtin: z.string().nullable(),
-    price: z.number().nullable(),
-    stock: z.number(),
-    attributes: z.record(z.string(), z.unknown()),
-    isActive: z.boolean(),
-    weightInGrams: z.number().nullable(),
-    lengthCm: z.string().nullable(),
-    widthCm: z.string().nullable(),
-    heightCm: z.string().nullable(),
-});
 
-const imageRawSchema = z.object({
-    id: z.string().uuid(),
-    productId: z.string().uuid(),
-    variantId: z.string().uuid().nullable(),
-    url: z.string().url(),
-    altText: z.string().nullable(),
-    position: z.number(),
-    isPrimary: z.boolean(),
-});
 
 export const productsRoutes: FastifyPluginAsyncZod = async (app) => {
-    app.get('/products/search', {
-        schema: {
-            tags: ['Products'],
-            summary: 'Busca com filtros e full-text search',
-            operationId: 'searchProducts',
-            querystring: searchProductsSchema,
-            response: {
-                200: z.object({
-                    items: z.array(productCardSchema),
-                    total: z.number(),
-                    nextCursor: z.string().uuid().nullable(),
-                    hasMore: z.boolean(),
-                }),
-            },
-        },
-        handler: searchProductsHandler,
-    });
+	
 
-    app.get('/products/slug/:slug', {
-        schema: {
-            tags: ['Products'],
-            summary: 'Detalhe do produto por slug — PDP',
-            operationId: 'getProductBySlug',
-            params: productSlugParamsSchema,
-            response: { 200: productDetailSchema },
-        },
-        handler: getProductBySlugHandler,
-    });
+	app.get('/products/search', {
+		schema: {
+			tags: ['Products'],
+			summary: 'Buscar produtos',
+			operationId: 'searchProducts',
+			querystring: searchProductsSchema,
+			response: { 200: productListSchema },
+		},
+		handler: searchProductsHandler,
+	});
 
-    app.get('/products/:id', {
-        schema: {
-            tags: ['Products'],
-            summary: 'Produto por ID (uso interno/admin)',
-            operationId: 'getProductById',
-            params: productParamsSchema,
-            response: { 200: productCardSchema },
-        },
-        handler: getProductByIdHandler,
-    });
+	app.get('/products/slug/:slug', {
+		schema: {
+			tags: ['Products'],
+			summary: 'Obter produto por slug (PDP)',
+			operationId: 'getProductBySlug',
+			params: productSlugParamsSchema,
+			response: { 200: productDetailSchema },
+		},
+		handler: getProductBySlugHandler,
+	});
 
-    app.get('/products/:id/variants', {
-        schema: {
-            tags: ['Products'],
-            summary: 'Listar variantes do produto',
-            operationId: 'listProductVariants',
-            params: productParamsSchema,
-            response: { 200: z.array(z.unknown()) }, // Simplified for now, can be expanded if needed
-        },
-        handler: listVariantsHandler,
-    });
 
-    app.get('/products/:id/images', {
-        schema: {
-            tags: ['Products'],
-            summary: 'Listar galeria de imagens',
-            operationId: 'listProductImages',
-            params: productParamsSchema,
-            response: { 200: z.array(imageRawSchema) },
-        },
-        handler: listImagesHandler,
-    });
 
-    app.post('/admin/products', {
-        schema: {
-            tags: ['Products'],
-            summary: 'Criar produto (admin)',
-            operationId: 'createProduct',
-            body: createProductSchema,
-            response: { 201: productRawSchema },
-        },
-        preHandler: [app.authenticate],
-        handler: createProductHandler,
-    });
+	app.get('/admin/products/:id', {
+		schema: {
+			tags: ['Admin Products'],
+			summary: 'Obter produto por ID',
+			operationId: 'getProductById',
+			params: productParamsSchema,
+			response: { 200: productDetailSchema },
+		},
+		preHandler: app.authenticate,
+		handler: getProductByIdHandler,
+	});
 
-    app.patch('/admin/products/:id', {
-        schema: {
-            tags: ['Products'],
-            summary: 'Atualizar produto (admin)',
-            operationId: 'updateProduct',
-            params: productParamsSchema,
-            body: updateProductSchema,
-            response: { 200: productRawSchema },
-        },
-        preHandler: [app.authenticate],
-        handler: updateProductHandler,
-    });
+	app.post('/admin/products', {
+		schema: {
+			tags: ['Admin Products'],
+			summary: 'Criar produto',
+			operationId: 'createProduct',
+			body: createProductSchema,
+			response: { 201: productDetailSchema },
+		},
+		preHandler: app.authenticate,
+		handler: createProductHandler,
+	});
 
-    app.delete('/admin/products/:id', {
-        schema: {
-            tags: ['Products'],
-            summary: 'Arquivar produto (admin)',
-            operationId: 'archiveProduct',
-            params: productParamsSchema,
-            response: { 200: productRawSchema },
-        },
-        preHandler: [app.authenticate],
-        handler: archiveProductHandler,
-    });
+	app.patch('/admin/products/:id', {
+		schema: {
+			tags: ['Admin Products'],
+			summary: 'Atualizar produto',
+			operationId: 'updateProduct',
+			params: productParamsSchema,
+			body: updateProductSchema,
+			response: { 200: productDetailSchema },
+		},
+		preHandler: app.authenticate,
+		handler: updateProductHandler,
+	});
 
-    app.post('/admin/products/:id/variants', {
-        schema: {
-            tags: ['Products'],
-            summary: 'Adicionar variante (admin)',
-            operationId: 'createVariant',
-            params: productParamsSchema,
-            body: createVariantSchema,
-            response: { 201: variantRawSchema },
-        },
-        preHandler: [app.authenticate],
-        handler: createVariantHandler,
-    });
+	app.delete('/admin/products/:id', {
+		schema: {
+			tags: ['Admin Products'],
+			summary: 'Arquivar produto',
+			operationId: 'archiveProduct',
+			params: productParamsSchema,
+			response: { 200: z.object({ status: z.string() }) },
+		},
+		preHandler: app.authenticate,
+		handler: archiveProductHandler,
+	});
 
-    app.patch('/admin/products/:id/variants/:vid', {
-        schema: {
-            tags: ['Products'],
-            summary: 'Atualizar variante (admin)',
-            operationId: 'updateVariant',
-            params: variantParamsSchema,
-            body: updateVariantSchema,
-            response: { 200: variantRawSchema },
-        },
-        preHandler: [app.authenticate],
-        handler: updateVariantHandler,
-    });
+	
+	app.patch('/admin/products/:id/skus/:skuId', {
+		schema: {
+			tags: ['Admin Products'],
+			summary: 'Atualizar SKU',
+			operationId: 'updateProductSku',
+			params: skuParamsSchema,
+			body: updateSkuSchema,
+			response: { 200: z.object({ id: z.string() }) },
+		},
+		preHandler: app.authenticate,
+		handler: updateSkuHandler,
+	});
 
-    app.post('/admin/products/:id/images/presign', {
-        schema: {
-            tags: ['Products'],
-            summary: 'Gerar assinatura Cloudinary (admin)',
-            operationId: 'presignProductImage',
-            params: productParamsSchema,
-            response: {
-                200: z.object({
-                    signature: z.string(),
-                    timestamp: z.number(),
-                    folder: z.string(),
-                    publicId: z.string().optional(),
-                    cloudName: z.string(),
-                    apiKey: z.string(),
-                }),
-            },
-        },
-        preHandler: [app.authenticate],
-        handler: presignImageHandler,
-    });
 
-    app.post('/admin/products/:id/images', {
-        schema: {
-            tags: ['Products'],
-            summary: 'Confirmar imagem após upload (admin)',
-            operationId: 'confirmProductImage',
-            params: productParamsSchema,
-            body: confirmProductImageSchema,
-            response: { 201: imageRawSchema },
-        },
-        preHandler: [app.authenticate],
-        handler: confirmImageHandler,
-    });
+	app.get('/admin/products/:id/images', {
+		schema: {
+			tags: ['Admin Products'],
+			summary: 'Listar imagens do produto',
+			operationId: 'listProductImages',
+			params: productParamsSchema,
+			response: { 200: z.array(imageSchema) },
+		},
+		preHandler: app.authenticate,
+		handler: listImagesHandler,
+	});
 
-    app.patch('/admin/products/:id/images/:iid', {
-        schema: {
-            tags: ['Products'],
-            summary: 'Atualizar imagem (admin)',
-            operationId: 'updateProductImage',
-            params: imageParamsSchema,
-            body: updateProductImageSchema,
-            response: { 200: imageRawSchema },
-        },
-        preHandler: [app.authenticate],
-        handler: updateImageHandler,
-    });
+	app.post('/admin/products/:id/images/presign', {
+		schema: {
+			tags: ['Admin Products'],
+			summary: 'Gerar URL pré-assinada para upload de imagem',
+			operationId: 'presignProductImage',
+			params: productParamsSchema,
+			response: {
+				200: z.object({
+					signature: z.string(),
+					timestamp: z.number(),
+					apiKey: z.string(),
+					cloudName: z.string(),
+					folder: z.string(),
+					publicId: z.string(),
+				}),
+			},
+		},
+		preHandler: app.authenticate,
+		handler: presignImageHandler,
+	});
 
-    app.delete('/admin/products/:id/images/:iid', {
-        schema: {
-            tags: ['Products'],
-            summary: 'Remover imagem (admin)',
-            operationId: 'deleteProductImage',
-            params: imageParamsSchema,
-            response: { 200: z.object({ deleted: z.boolean() }) },
-        },
-        preHandler: [app.authenticate],
-        handler: deleteImageHandler,
-    });
+	app.post('/admin/products/:id/images', {
+		schema: {
+			tags: ['Admin Products'],
+			summary: 'Confirmar upload de imagem',
+			operationId: 'confirmProductImage',
+			params: productParamsSchema,
+			body: confirmProductImageSchema,
+			response: { 201: imageSchema },
+		},
+		preHandler: app.authenticate,
+		handler: confirmImageHandler,
+	});
 
-    app.post('/admin/products/:id/images/reorder', {
-        schema: {
-            tags: ['Products'],
-            summary: 'Reordenar galeria (admin)',
-            operationId: 'reorderProductImages',
-            params: productParamsSchema,
-            body: reorderImagesSchema,
-            response: { 200: z.object({ reordered: z.boolean() }) },
-        },
-        preHandler: [app.authenticate],
-        handler: reorderImagesHandler,
-    });
+	app.patch('/admin/products/:id/images/:iid', {
+		schema: {
+			tags: ['Admin Products'],
+			summary: 'Atualizar metadados da imagem',
+			operationId: 'updateProductImage',
+			params: imageParamsSchema,
+			body: updateProductImageSchema,
+			response: { 200: imageSchema },
+		},
+		preHandler: app.authenticate,
+		handler: updateImageHandler,
+	});
+
+	app.delete('/admin/products/:id/images/:iid', {
+		schema: {
+			tags: ['Admin Products'],
+			summary: 'Deletar imagem',
+			operationId: 'deleteProductImage',
+			params: imageParamsSchema,
+			response: { 200: z.object({ deleted: z.boolean() }) },
+		},
+		preHandler: app.authenticate,
+		handler: deleteImageHandler,
+	});
+
+	app.patch('/admin/products/:id/images/reorder', {
+		schema: {
+			tags: ['Admin Products'],
+			summary: 'Reordenar imagens',
+			operationId: 'reorderProductImages',
+			params: productParamsSchema,
+			body: reorderImagesSchema,
+			response: { 200: z.object({ reordered: z.boolean() }) },
+		},
+		preHandler: app.authenticate,
+		handler: reorderImagesHandler,
+	});
 };

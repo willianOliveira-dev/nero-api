@@ -70,7 +70,7 @@ CREATE TABLE "cart_items" (
 	"id" text PRIMARY KEY NOT NULL,
 	"cart_id" text NOT NULL,
 	"product_id" text NOT NULL,
-	"variant_id" text,
+	"sku_id" text,
 	"quantity" integer DEFAULT 1 NOT NULL,
 	"price_snapshot" numeric(10, 2) NOT NULL,
 	CONSTRAINT "chk_cart_item_quantity" CHECK ("cart_items"."quantity" > 0)
@@ -130,7 +130,7 @@ CREATE TABLE "order_items" (
 	"id" text PRIMARY KEY NOT NULL,
 	"order_id" text NOT NULL,
 	"product_id" text,
-	"variant_id" text,
+	"sku_id" text,
 	"quantity" integer NOT NULL,
 	"unit_price" numeric(10, 2) NOT NULL,
 	"product_snapshot" jsonb NOT NULL
@@ -174,7 +174,6 @@ CREATE TABLE "payment_methods" (
 CREATE TABLE "product_images" (
 	"id" text PRIMARY KEY NOT NULL,
 	"product_id" text NOT NULL,
-	"variant_id" text,
 	"url" text NOT NULL,
 	"alt_text" varchar(255),
 	"position" smallint DEFAULT 1 NOT NULL,
@@ -196,20 +195,16 @@ CREATE TABLE "product_reviews" (
 	"created_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "product_variants" (
+CREATE TABLE "product_skus" (
 	"id" text PRIMARY KEY NOT NULL,
 	"product_id" text NOT NULL,
-	"sku" varchar(100) NOT NULL,
-	"gtin" varchar(14),
-	"price" numeric(12, 0),
+	"price" integer NOT NULL,
+	"compare_at_price" integer,
 	"stock" integer DEFAULT 0 NOT NULL,
-	"attributes" jsonb NOT NULL,
+	"sku_code" varchar(100) NOT NULL,
+	"ean" varchar(14),
 	"is_active" boolean DEFAULT true NOT NULL,
-	"weight_in_grams" integer,
-	"length_cm" numeric(6, 1),
-	"width_cm" numeric(6, 1),
-	"height_cm" numeric(6, 1),
-	CONSTRAINT "product_variants_sku_unique" UNIQUE("sku")
+	CONSTRAINT "product_skus_sku_code_unique" UNIQUE("sku_code")
 );
 --> statement-breakpoint
 CREATE TABLE "products" (
@@ -217,14 +212,19 @@ CREATE TABLE "products" (
 	"name" varchar(255) NOT NULL,
 	"slug" varchar(280) NOT NULL,
 	"description" text,
-	"base_price" integer NOT NULL,
-	"original_price" integer,
+	"price" integer,
+	"compare_at_price" integer,
+	"stock" integer,
+	"sku_code" varchar(100),
+	"ean" varchar(14),
 	"category_id" text,
 	"brand_id" text,
 	"size_chart_url" text,
+	"thumbnail_url" text,
 	"gender" "product_gender_enum" NOT NULL,
 	"status" "product_status_enum" DEFAULT 'draft' NOT NULL,
 	"free_shipping" boolean DEFAULT false NOT NULL,
+	"has_variations" boolean DEFAULT false NOT NULL,
 	"sold_count" integer DEFAULT 0 NOT NULL,
 	"rating_avg" numeric(3, 2) DEFAULT '0',
 	"rating_count" integer DEFAULT 0 NOT NULL,
@@ -249,6 +249,12 @@ CREATE TABLE "review_media" (
 	"duration" varchar(20),
 	"sort_order" integer DEFAULT 0 NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "sku_option_map" (
+	"id" text PRIMARY KEY NOT NULL,
+	"sku_id" text NOT NULL,
+	"variation_option_id" text NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "user_addresses" (
@@ -279,6 +285,22 @@ CREATE TABLE "user_profiles" (
 	CONSTRAINT "user_profiles_stripe_customer_id_unique" UNIQUE("stripe_customer_id")
 );
 --> statement-breakpoint
+CREATE TABLE "variation_options" (
+	"id" text PRIMARY KEY NOT NULL,
+	"variation_type_id" text NOT NULL,
+	"value" varchar(100) NOT NULL,
+	"image_url" text,
+	"position" smallint DEFAULT 1 NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "variation_types" (
+	"id" text PRIMARY KEY NOT NULL,
+	"product_id" text NOT NULL,
+	"name" varchar(100) NOT NULL,
+	"position" smallint DEFAULT 1 NOT NULL,
+	"has_image" boolean DEFAULT false NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "wishlist_items" (
 	"id" text PRIMARY KEY NOT NULL,
 	"wishlist_id" text NOT NULL,
@@ -298,30 +320,33 @@ ALTER TABLE "account" ADD CONSTRAINT "account_user_id_user_id_fk" FOREIGN KEY ("
 ALTER TABLE "session" ADD CONSTRAINT "session_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "cart_items" ADD CONSTRAINT "cart_items_cart_id_carts_id_fk" FOREIGN KEY ("cart_id") REFERENCES "public"."carts"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "cart_items" ADD CONSTRAINT "cart_items_product_id_products_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."products"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "cart_items" ADD CONSTRAINT "cart_items_variant_id_product_variants_id_fk" FOREIGN KEY ("variant_id") REFERENCES "public"."product_variants"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "cart_items" ADD CONSTRAINT "cart_items_sku_id_product_skus_id_fk" FOREIGN KEY ("sku_id") REFERENCES "public"."product_skus"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "carts" ADD CONSTRAINT "carts_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "carts" ADD CONSTRAINT "carts_coupon_id_coupons_id_fk" FOREIGN KEY ("coupon_id") REFERENCES "public"."coupons"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "order_items" ADD CONSTRAINT "order_items_order_id_orders_id_fk" FOREIGN KEY ("order_id") REFERENCES "public"."orders"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "order_items" ADD CONSTRAINT "order_items_product_id_products_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."products"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "order_items" ADD CONSTRAINT "order_items_variant_id_product_variants_id_fk" FOREIGN KEY ("variant_id") REFERENCES "public"."product_variants"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "order_items" ADD CONSTRAINT "order_items_sku_id_product_skus_id_fk" FOREIGN KEY ("sku_id") REFERENCES "public"."product_skus"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "orders" ADD CONSTRAINT "orders_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "orders" ADD CONSTRAINT "orders_coupon_id_coupons_id_fk" FOREIGN KEY ("coupon_id") REFERENCES "public"."coupons"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "orders" ADD CONSTRAINT "orders_shipping_address_id_user_addresses_id_fk" FOREIGN KEY ("shipping_address_id") REFERENCES "public"."user_addresses"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "orders" ADD CONSTRAINT "orders_payment_method_id_payment_methods_id_fk" FOREIGN KEY ("payment_method_id") REFERENCES "public"."payment_methods"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "payment_methods" ADD CONSTRAINT "payment_methods_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "product_images" ADD CONSTRAINT "product_images_product_id_products_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."products"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "product_images" ADD CONSTRAINT "product_images_variant_id_product_variants_id_fk" FOREIGN KEY ("variant_id") REFERENCES "public"."product_variants"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "product_reviews" ADD CONSTRAINT "product_reviews_product_id_products_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."products"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "product_reviews" ADD CONSTRAINT "product_reviews_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "product_reviews" ADD CONSTRAINT "product_reviews_order_id_orders_id_fk" FOREIGN KEY ("order_id") REFERENCES "public"."orders"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "product_variants" ADD CONSTRAINT "product_variants_product_id_products_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."products"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "product_skus" ADD CONSTRAINT "product_skus_product_id_products_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."products"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "products" ADD CONSTRAINT "products_category_id_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."categories"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "products" ADD CONSTRAINT "products_brand_id_brands_id_fk" FOREIGN KEY ("brand_id") REFERENCES "public"."brands"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "review_likes" ADD CONSTRAINT "review_likes_review_id_product_reviews_id_fk" FOREIGN KEY ("review_id") REFERENCES "public"."product_reviews"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "review_likes" ADD CONSTRAINT "review_likes_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "review_media" ADD CONSTRAINT "review_media_review_id_product_reviews_id_fk" FOREIGN KEY ("review_id") REFERENCES "public"."product_reviews"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "sku_option_map" ADD CONSTRAINT "sku_option_map_sku_id_product_skus_id_fk" FOREIGN KEY ("sku_id") REFERENCES "public"."product_skus"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "sku_option_map" ADD CONSTRAINT "sku_option_map_variation_option_id_variation_options_id_fk" FOREIGN KEY ("variation_option_id") REFERENCES "public"."variation_options"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "user_addresses" ADD CONSTRAINT "user_addresses_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "user_profiles" ADD CONSTRAINT "user_profiles_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "variation_options" ADD CONSTRAINT "variation_options_variation_type_id_variation_types_id_fk" FOREIGN KEY ("variation_type_id") REFERENCES "public"."variation_types"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "variation_types" ADD CONSTRAINT "variation_types_product_id_products_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."products"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "wishlist_items" ADD CONSTRAINT "wishlist_items_wishlist_id_wishlists_id_fk" FOREIGN KEY ("wishlist_id") REFERENCES "public"."wishlists"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "wishlist_items" ADD CONSTRAINT "wishlist_items_product_id_products_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."products"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "wishlists" ADD CONSTRAINT "wishlists_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -343,16 +368,22 @@ CREATE UNIQUE INDEX "idx_orders_stripe_pi" ON "orders" USING btree ("stripe_paym
 CREATE INDEX "idx_payment_methods_user_id" ON "payment_methods" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "idx_product_images_product_id" ON "product_images" USING btree ("product_id");--> statement-breakpoint
 CREATE INDEX "idx_product_images_position" ON "product_images" USING btree ("product_id","position");--> statement-breakpoint
-CREATE UNIQUE INDEX "idx_product_variants_sku" ON "product_variants" USING btree ("sku");--> statement-breakpoint
+CREATE INDEX "idx_product_skus_product_id" ON "product_skus" USING btree ("product_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "idx_product_skus_sku_code" ON "product_skus" USING btree ("sku_code");--> statement-breakpoint
 CREATE UNIQUE INDEX "idx_products_slug" ON "products" USING btree ("slug");--> statement-breakpoint
 CREATE INDEX "idx_products_category_id" ON "products" USING btree ("category_id");--> statement-breakpoint
 CREATE INDEX "idx_products_brand_id" ON "products" USING btree ("brand_id");--> statement-breakpoint
 CREATE INDEX "idx_products_gender" ON "products" USING btree ("gender");--> statement-breakpoint
 CREATE INDEX "idx_products_status" ON "products" USING btree ("status");--> statement-breakpoint
-CREATE INDEX "idx_products_base_price" ON "products" USING btree ("base_price");--> statement-breakpoint
+CREATE INDEX "idx_products_price" ON "products" USING btree ("price");--> statement-breakpoint
 CREATE INDEX "idx_products_rating_sold" ON "products" USING btree ("rating_avg","sold_count");--> statement-breakpoint
 CREATE UNIQUE INDEX "idx_review_likes_unique" ON "review_likes" USING btree ("review_id","user_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "idx_sku_option_map_unique" ON "sku_option_map" USING btree ("sku_id","variation_option_id");--> statement-breakpoint
 CREATE INDEX "idx_user_addresses_user_id" ON "user_addresses" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "idx_variation_options_type_id" ON "variation_options" USING btree ("variation_type_id");--> statement-breakpoint
+CREATE INDEX "idx_variation_options_position" ON "variation_options" USING btree ("variation_type_id","position");--> statement-breakpoint
+CREATE INDEX "idx_variation_types_product_id" ON "variation_types" USING btree ("product_id");--> statement-breakpoint
+CREATE INDEX "idx_variation_types_position" ON "variation_types" USING btree ("product_id","position");--> statement-breakpoint
 CREATE INDEX "idx_wishlist_items_wishlist_id" ON "wishlist_items" USING btree ("wishlist_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "idx_wishlist_items_unique" ON "wishlist_items" USING btree ("wishlist_id","product_id");--> statement-breakpoint
 CREATE INDEX "idx_wishlists_user_id" ON "wishlists" USING btree ("user_id");

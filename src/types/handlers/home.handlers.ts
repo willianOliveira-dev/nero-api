@@ -12,6 +12,7 @@ import type {
     HomeSectionParams,
     ReorderHomeSectionsInput,
     UpdateHomeSectionInput,
+    GetHomeQuery,
 } from '../../modules/home/validations/home.validation';
 
 type Handler<TParams = unknown, TBody = unknown, TQuery = unknown> = RouteHandlerMethod<
@@ -24,7 +25,7 @@ type Handler<TParams = unknown, TBody = unknown, TQuery = unknown> = RouteHandle
     ZodTypeProvider
 >;
 
-export type GetHomeHandler = Handler;
+export type GetHomeHandler = Handler<unknown, unknown, GetHomeQuery>;
 export type GetHomeSectionHandler = Handler<HomeSectionParams>;
 export type ListHomeSectionsHandler = Handler;
 export type CreateHomeSectionHandler = Handler<unknown, CreateHomeSectionInput>;

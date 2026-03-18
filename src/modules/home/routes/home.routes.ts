@@ -15,6 +15,7 @@ import {
     homeSectionSlugParamsSchema,
     reorderHomeSectionsSchema,
     updateHomeSectionSchema,
+    getHomeQuerySchema,
 } from '../validations/home.validation';
 
 const priceOutputSchema = z.object({
@@ -23,20 +24,37 @@ const priceOutputSchema = z.object({
     formatted: z.string(),
 });
 
+const brandSchema = z
+    .object({
+        name: z.string(),
+        slug: z.string(),
+        logo: z.string().nullable().optional(),
+    })
+    .nullable();
+
+const ratingSchema = z.object({
+    average: z.number(),
+    count: z.number(),
+    sold: z.number(),
+});
+
 const productCardSchema = z.object({
-    id: z.string().uuid(),
+    id: z.string(),
     name: z.string(),
     slug: z.string(),
-    price: z.object({
-        current: priceOutputSchema,
-        original: priceOutputSchema.nullable(),
-        discountPercent: z.number().nullable(),
-    }),
+    status: z.string(),
+    thumbnailUrl: z.string().nullable(),
+    hasVariations: z.boolean(),
+    pricing: z
+        .object({
+            displayPriceMin: priceOutputSchema,
+            priceRange: z.string(),
+            hasPriceVariation: z.boolean(),
+        })
+        .nullable(),
+    brand: brandSchema,
+    rating: ratingSchema,
     freeShipping: z.boolean(),
-    ratingAvg: z.number().nullable(),
-    ratingCount: z.number(),
-    soldCount: z.number(),
-    imageUrl: z.string().url().nullable(),
 });
 
 const homeSectionSchema = z.object({
@@ -84,6 +102,7 @@ export const homeRoutes: FastifyPluginAsyncZod = async (app) => {
             tags: ['Home'],
             summary: 'Retornar todas as seções ativas da home com produtos',
             operationId: 'getHome',
+            querystring: getHomeQuerySchema,
             response: { 200: z.array(homeSectionSchema) },
         },
         handler: getHomeHandler,
