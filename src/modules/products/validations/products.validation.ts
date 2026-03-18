@@ -118,11 +118,12 @@ export const searchProductsSchema = z.object({
 	gender: productGenderEnum.optional(),
 	sort: z
 		.enum(['recommended', 'newest', 'price_asc', 'price_desc'])
-		.default('recommended'),
+		.optional(),
 	deals: z.enum(['on_sale', 'free_shipping']).optional(),
 	priceMin: z.coerce.number().positive().optional(),
 	priceMax: z.coerce.number().positive().optional(),
 	categoryId: z.string().uuid({ message: 'Id inválido.' }).optional(),
+	brandId: z.string().uuid({ message: 'Id inválido.' }).optional(),
 	limit: z.coerce.number().int().min(1).max(100).default(20),
 	cursor: z
 		.string()
@@ -130,7 +131,7 @@ export const searchProductsSchema = z.object({
 		.optional(),
 });
 
-// ── Imagens ───────────────────────────────────────────────────
+
 
 export const confirmProductImageSchema = z.object({
 	url: z.string().url({ message: 'URL inválida.' }).or(z.literal('')),

@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, isNotNull, lt, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, isNotNull, lt, or, sql } from 'drizzle-orm';
 import { db } from '@/lib/db/connection';
 import {
 	productImages,
@@ -156,6 +156,7 @@ export class ProductsRepository {
 			priceMin,
 			priceMax,
 			categoryId,
+			brandId,
 			limit,
 			cursor,
 		} = filters;
@@ -167,6 +168,9 @@ export class ProductsRepository {
 		}
 		if (categoryId) {
 			conditions.push(eq(products.categoryId, categoryId));
+		}
+		if (brandId) {
+			conditions.push(eq(products.brandId, brandId));
 		}
 		if (priceMin) {
 			conditions.push(gt(products.price, Price.toInt(priceMin)));
@@ -184,25 +188,29 @@ export class ProductsRepository {
 
 		if (q) {
 			conditions.push(
-				sql`${products.searchVector} @@ plainto_tsquery('portuguese', ${q})`,
+				or(
+					sql`${products.searchVector} @@ plainto_tsquery('portuguese', ${q})`,
+					sql`${products.name} ILIKE ${`%${q}%`}`
+				)!
 			);
 		}
 
-		if (cursor) {
-			conditions.push(gt(products.id, cursor));
-		}
+		const offset = cursor ? parseInt(cursor, 10) : 0;
 
+		const activeSort = sort ?? 'recommended';
+		const priceQuery = sql`COALESCE("products"."price", (SELECT MIN("price") FROM "product_skus" WHERE "product_id" = "products"."id" AND "is_active" = true))`;
 		const orderBy = {
 			recommended: [desc(products.ratingAvg), desc(products.soldCount)],
 			newest: [desc(products.createdAt)],
-			price_asc: [asc(products.price)],
-			price_desc: [desc(products.price)],
-		}[sort] ?? [desc(products.createdAt)];
+			price_asc: [sql`${priceQuery} asc nulls last`],
+			price_desc: [sql`${priceQuery} desc nulls last`],
+		}[activeSort] ?? [desc(products.createdAt)];
 
 		const rows = await db.query.products.findMany({
 			where: and(...conditions),
 			orderBy,
 			limit: limit + 1,
+			offset: offset,
 			with: {
 				brand: {
 					columns: {
@@ -225,7 +233,7 @@ export class ProductsRepository {
 
 		const hasMore = rows.length > limit;
 		const data = hasMore ? rows.slice(0, limit) : rows;
-		const nextCursor = hasMore ? data[data.length - 1].id : null;
+		const nextCursor = hasMore ? String(offset + limit) : null;
 
 		const [{ total }] = await db
 			.select({ total: sql<number>`count(*)::int` })
