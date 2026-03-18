@@ -1,5 +1,5 @@
 {
-  "id": "933b8fb5-f7e7-4e48-a4aa-362b4607d9a3",
+  "id": "da08dfc3-4989-49ab-bd89-b55366fa4a5c",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -796,13 +796,13 @@
         },
         "value": {
           "name": "value",
-          "type": "numeric(10, 2)",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
         "min_order_value": {
           "name": "min_order_value",
-          "type": "numeric(10, 2)",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false
         },

@@ -1,23 +1,3 @@
-/**
- * cart.service.ts
- * ─────────────────────────────────────────────────────────────
- * Regras absolutas de Carrinho/Checkout:
- *
- * 1. selectedQuantity NUNCA pode exceder sku.stock
- *    → Retorna 400 BAD_REQUEST se tentativa.
- *
- * 2. O Carrinho armazena o sku.id — nunca o nome da opção
- *    ou o ID do produto raiz isoladamente.
- *
- * 3. Price snapshot: captura o preço real do SKU/produto
- *    no momento da adição — lança erro se não encontrar
- *    (corrigido de falha silenciosa retornando "0").
- *
- * 4. Checkout SEMPRE revalida o estoque em tempo real,
- *    independente do que o frontend enviou.
- * ─────────────────────────────────────────────────────────────
- */
-
 import { BadRequestError, NotFoundError } from '@/shared/errors/app.error';
 import { Price } from '@/shared/utils/price.util';
 import { CartRepository } from '../repositories/cart.repository';
@@ -52,7 +32,6 @@ export class CartService {
 	async addItem(userId: string, input: AddCartItemInput) {
 		const cart = await this.getOrCreate(userId);
 
-		// ── Validar estoque ANTES de adicionar ──
 		const availableStock = await this.getAvailableStock(
 			input.productId,
 			input.skuId,
@@ -107,7 +86,6 @@ export class CartService {
 			throw new NotFoundError('Item não encontrado no carrinho.');
 		}
 
-		// ── Validar estoque ANTES de atualizar ──
 		const availableStock = await this.getAvailableStock(
 			item.productId,
 			item.skuId,
@@ -157,9 +135,7 @@ export class CartService {
 			coupon.minOrderValue &&
 			Number(cart.subtotal) < Number(coupon.minOrderValue)
 		) {
-			const min = Price.format(
-				String(Number(coupon.minOrderValue) * 100),
-			);
+			const min = Price.format(String(coupon.minOrderValue));
 			throw new BadRequestError(
 				`Pedido mínimo de ${min} para usar este cupom.`,
 			);
@@ -188,6 +164,16 @@ export class CartService {
 		}
 		if (coupon.maxUses !== null && coupon.usedCount >= coupon.maxUses) {
 			throw new BadRequestError('Cupom esgotado.');
+		}
+
+		if (
+			coupon.minOrderValue &&
+			Number(cart.subtotal) < Number(coupon.minOrderValue)
+		) {
+			const min = Price.format(String(coupon.minOrderValue));
+			throw new BadRequestError(
+				`Pedido mínimo de ${min} para usar este cupom.`,
+			);
 		}
 
 		const subtotalCents = Number(cart.subtotal);
@@ -311,16 +297,16 @@ export class CartService {
 
 	private calcDiscount(
 		subtotalCents: number,
-		coupon: { type: string; value: string },
+		coupon: { type: string; value: number },
 	): number {
 		if (coupon.type === 'free_shipping') {
 			return 800;
 		}
 		if (coupon.type === 'percentage') {
-			return Math.round(subtotalCents * (Number(coupon.value) / 100));
+			return Math.round(subtotalCents * (coupon.value / 100));
 		}
 		if (coupon.type === 'fixed') {
-			return Math.min(subtotalCents, Number(coupon.value) * 100);
+			return Math.min(subtotalCents, coupon.value);
 		}
 		return 0;
 	}
@@ -332,7 +318,6 @@ export class CartService {
 				? { code: cart.coupon.code, type: cart.coupon.type }
 				: null,
 			items: cart.items.map((item) => {
-				// Build optionLabels from SKU mappings
 				const optionLabels: Record<string, string> = {};
 				if (item.sku && 'optionMappings' in item.sku) {
 					for (const mapping of (item.sku as any).optionMappings) {

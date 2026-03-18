@@ -24,7 +24,7 @@ import { Price } from '../shared/utils/price.util';
 const client = postgres(env.DATABASE_URL);
 const db = drizzle(client, { schema });
 
-// ── Helpers ───────────────────────────────────────────────────
+
 const p = (reais: number) => Price.toInt(reais)!;
 
 type VariationDef = {
@@ -106,7 +106,7 @@ async function createProductWithVariations(
 	return insertedSkus;
 }
 
-// ── Main Seed ─────────────────────────────────────────────────
+
 
 async function seed() {
 	try {
@@ -132,7 +132,7 @@ async function seed() {
 		await db.delete(homeSections);
 		console.log('✅ Banco limpo.\n');
 
-		// ── Brands ────────────────────────────────────────────
+		
 		console.log('🏷️  Inserindo marcas...');
 		const insertedBrands = await db
 			.insert(brands)
@@ -145,7 +145,7 @@ async function seed() {
 		const brandMap = Object.fromEntries(insertedBrands.map((b) => [b.slug, b.id]));
 		console.log(`✅ ${insertedBrands.length} marcas inseridas.\n`);
 
-		// ── Categories ────────────────────────────────────────
+		
 		console.log('📁 Inserindo categorias...');
 		const insertedCategories = await db
 			.insert(categories)
@@ -180,17 +180,16 @@ async function seed() {
 		const catMap = Object.fromEntries(insertedCategories.map((c) => [c.slug, c.id]));
 		console.log(`✅ ${insertedCategories.length} categorias inseridas.\n`);
 
-		// ── Coupons ───────────────────────────────────────────
 		console.log('🎟️  Inserindo cupons...');
 		await db.insert(coupons).values([
-			{ code: 'BEMVINDO10', type: 'percentage', value: '10', minOrderValue: '10000', maxUses: 1000, usedCount: 0, expiresAt: new Date('2026-12-31'), isActive: true },
-			{ code: 'FRETEGRATIS', type: 'free_shipping', value: '0', minOrderValue: '15000', maxUses: 500, usedCount: 0, expiresAt: new Date('2026-12-31'), isActive: true },
-			{ code: 'NEGRO20', type: 'percentage', value: '20', minOrderValue: '20000', maxUses: 200, usedCount: 0, expiresAt: new Date('2026-11-30'), isActive: true },
-			{ code: 'DESC50', type: 'fixed', value: '5000', minOrderValue: '30000', maxUses: 100, usedCount: 0, expiresAt: new Date('2026-06-30'), isActive: true },
+			{ code: 'BEMVINDO10', type: 'percentage', value: 10, minOrderValue: 10000, maxUses: 1000, usedCount: 0, expiresAt: new Date('2026-12-31'), isActive: true },
+			{ code: 'FRETEGRATIS', type: 'free_shipping', value: 0, minOrderValue: 15000, maxUses: 500, usedCount: 0, expiresAt: new Date('2026-12-31'), isActive: true },
+			{ code: 'NEGRO20', type: 'percentage', value: 20, minOrderValue: 20000, maxUses: 200, usedCount: 0, expiresAt: new Date('2026-11-30'), isActive: true },
+			{ code: 'DESC50', type: 'fixed', value: 5000, minOrderValue: 30000, maxUses: 100, usedCount: 0, expiresAt: new Date('2026-06-30'), isActive: true },
 		]);
 		console.log('✅ Cupons inseridos.\n');
 
-		// ── Users ─────────────────────────────────────────────
+
 		console.log('👤 Criando usuários...');
 		const userDefs = [
 			{ email: 'ana.silva@email.com', password: 'Senha123!', name: 'Ana Silva' },
@@ -214,7 +213,7 @@ async function seed() {
 		const [ana, joao] = users;
 		console.log(`✅ ${users.length} usuários prontos.\n`);
 
-		// ── Profiles ──────────────────────────────────────────
+	
 		console.log('👤 Inserindo perfis...');
 		await db.insert(userProfiles).values([
 			{ userId: ana.id, genderPreference: 'women', phone: '+55 11 91234-5678' },
@@ -223,7 +222,7 @@ async function seed() {
 		]).onConflictDoNothing();
 		console.log('✅ Perfis inseridos.\n');
 
-		// ── Addresses ─────────────────────────────────────────
+	
 		console.log('📍 Inserindo endereços...');
 		await db.insert(userAddresses).values([
 			{ userId: ana.id, label: 'Casa', recipientName: 'Ana Silva', street: 'Rua das Flores, 123', city: 'São Paulo', state: 'SP', zipCode: '01234-567', country: 'BR', complement: 'Apto 45', isDefault: true },
@@ -232,7 +231,7 @@ async function seed() {
 		]);
 		console.log('✅ Endereços inseridos.\n');
 
-		// ── Products (with new SKU-based architecture) ─────────
+
 		console.log('👕 Inserindo produtos...');
 		const insertedProducts = await db
 			.insert(products)
@@ -292,7 +291,7 @@ async function seed() {
 					freeShipping: false, soldCount: 67, ratingAvg: '4.30', ratingCount: 28,
 				},
 				{
-					// Boné é produto SIMPLES (sem variações) — apenas Tamanho Único
+					
 					name: 'Boné Dad Hat', slug: 'bone-dad-hat', hasVariations: false,
 					description: 'Boné dad hat com bordado delicado. Regulagem ajustável para todos os tamanhos.',
 					categoryId: catMap['acessorios'], brandId: brandMap['nero-basics'], gender: 'unisex', status: 'active',
@@ -303,12 +302,10 @@ async function seed() {
 			.returning();
 		const [camOversized, camBasic, camCropped, calcaCargo, calcaChino, tenisRunner, tenisCasual, jaquetaBomber, jaquetaCorta, bone] = insertedProducts;
 		console.log(`✅ ${insertedProducts.length} produtos inseridos.\n`);
-
-		// ── Variation Types + Options + SKUs ───────────────────
 		console.log('🎨 Inserindo variações e SKUs...');
 		let totalSkus = 0;
 
-		// Camiseta Oversized: Cor (com imagem) × Tamanho
+
 		const ovsSKUs = await createProductWithVariations(
 			camOversized.id,
 			[
@@ -326,7 +323,7 @@ async function seed() {
 		);
 		totalSkus += ovsSKUs.length;
 
-		// Camiseta Basic: Tamanho
+
 		const bscSKUs = await createProductWithVariations(
 			camBasic.id,
 			[{ name: 'Tamanho', hasImage: false, options: [{ value: 'P' }, { value: 'M' }, { value: 'G' }, { value: 'GG' }] }],
@@ -339,7 +336,6 @@ async function seed() {
 		);
 		totalSkus += bscSKUs.length;
 
-		// Camiseta Cropped: Tamanho
 		await createProductWithVariations(
 			camCropped.id,
 			[{ name: 'Tamanho', hasImage: false, options: [{ value: 'PP' }, { value: 'P' }, { value: 'M' }] }],
@@ -351,7 +347,7 @@ async function seed() {
 		);
 		totalSkus += 3;
 
-		// Calça Cargo: Tamanho (numeração)
+	
 		const cargoSKUs = await createProductWithVariations(
 			calcaCargo.id,
 			[{ name: 'Tamanho', hasImage: false, options: [{ value: '38' }, { value: '40' }, { value: '42' }, { value: '44' }] }],
@@ -364,7 +360,7 @@ async function seed() {
 		);
 		totalSkus += cargoSKUs.length;
 
-		// Calça Chino: Tamanho
+
 		await createProductWithVariations(
 			calcaChino.id,
 			[{ name: 'Tamanho', hasImage: false, options: [{ value: '38' }, { value: '40' }, { value: '42' }] }],
@@ -376,7 +372,7 @@ async function seed() {
 		);
 		totalSkus += 3;
 
-		// Tênis Runner: Tamanho
+
 		const runnerSKUs = await createProductWithVariations(
 			tenisRunner.id,
 			[{ name: 'Tamanho', hasImage: false, options: [{ value: '38' }, { value: '39' }, { value: '40' }, { value: '41' }, { value: '42' }] }],
@@ -390,7 +386,7 @@ async function seed() {
 		);
 		totalSkus += runnerSKUs.length;
 
-		// Tênis Casual: Tamanho
+
 		await createProductWithVariations(
 			tenisCasual.id,
 			[{ name: 'Tamanho', hasImage: false, options: [{ value: '39' }, { value: '40' }, { value: '41' }] }],
@@ -402,7 +398,7 @@ async function seed() {
 		);
 		totalSkus += 3;
 
-		// Jaqueta Bomber: Tamanho
+		
 		const bomberSKUs = await createProductWithVariations(
 			jaquetaBomber.id,
 			[{ name: 'Tamanho', hasImage: false, options: [{ value: 'P' }, { value: 'M' }, { value: 'G' }] }],
@@ -414,7 +410,7 @@ async function seed() {
 		);
 		totalSkus += bomberSKUs.length;
 
-		// Jaqueta Corta-Vento: Tamanho
+	
 		await createProductWithVariations(
 			jaquetaCorta.id,
 			[{ name: 'Tamanho', hasImage: false, options: [{ value: 'P' }, { value: 'M' }, { value: 'G' }] }],
@@ -428,7 +424,6 @@ async function seed() {
 
 		console.log(`✅ ${totalSkus} SKUs + variações inseridos.\n`);
 
-		// ── Images ────────────────────────────────────────────
 		console.log('🖼️  Inserindo imagens...');
 		await db.insert(productImages).values([
 			{ productId: camOversized.id, url: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&h=800&fit=crop', altText: 'Camiseta oversized preta', position: 1, isPrimary: true },
@@ -448,7 +443,7 @@ async function seed() {
 		]);
 		console.log('✅ Imagens inseridas.\n');
 
-		// ── Home Sections ─────────────────────────────────────
+
 		console.log('🏠 Inserindo seções da home...');
 		await db.insert(homeSections).values([
 			{ slug: 'top-selling', title: 'Mais Vendidos', type: 'top_selling', sortOrder: 1, isActive: true, filterJson: { limit: 10 } },
@@ -460,7 +455,7 @@ async function seed() {
 		] as (typeof homeSections.$inferInsert)[]);
 		console.log('✅ Seções da home inseridas.\n');
 
-		// ── Reviews ───────────────────────────────────────────
+
 		console.log('⭐ Inserindo reviews...');
 		await db.insert(productReviews).values([
 			{ productId: camOversized.id, userId: ana.id, rating: 5, title: 'Perfeita!', comment: 'Super confortável, caimento incrível. Recomendo muito!', isVerifiedPurchase: true, status: 'approved' },
@@ -476,7 +471,7 @@ async function seed() {
 		]);
 		console.log('✅ Reviews inseridos.\n');
 
-		// ── Wishlists ─────────────────────────────────────────
+
 		console.log('❤️  Inserindo wishlists...');
 		const insertedWishlists = await db.insert(wishlists).values([
 			{ userId: ana.id, name: 'Meus Favoritos', isDefault: true },
@@ -495,7 +490,7 @@ async function seed() {
 		]).onConflictDoNothing();
 		console.log('✅ Wishlists inseridas.\n');
 
-		// ── Carts (using SKU IDs) ─────────────────────────────
+		
 		console.log('🛒 Inserindo carrinhos...');
 		const skuByCode = Object.fromEntries(
 			[...ovsSKUs, ...bscSKUs, ...cargoSKUs, ...runnerSKUs, ...bomberSKUs].map((s) => [s.skuCode, s]),
@@ -525,7 +520,7 @@ async function seed() {
 		]);
 		console.log('✅ Carrinhos inseridos.\n');
 
-		// ── Summary ───────────────────────────────────────────
+		
 		console.log('═══════════════════════════════════════');
 		console.log('✅ Seed concluído!\n');
 		console.log(`   Marcas:      ${insertedBrands.length}`);
