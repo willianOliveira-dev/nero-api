@@ -312,6 +312,9 @@ export class CartService {
 	}
 
 	private serializeCart(cart: LoadedCart) {
+		const subtotalCents = Number(cart.subtotal);
+		const discountCents = cart.coupon ? this.calcDiscount(subtotalCents, cart.coupon) : 0;
+
 		return {
 			id: cart.id,
 			coupon: cart.coupon
@@ -355,6 +358,7 @@ export class CartService {
 				subtotal: Price.toOutput(cart.subtotal),
 				shipping: Price.toOutput(cart.shippingCost),
 				tax: Price.toOutput(cart.taxAmount),
+				discount: Price.toOutput(String(discountCents)),
 				total: Price.toOutput(cart.total),
 				itemCount: cart.items.reduce((acc, i) => acc + i.quantity, 0),
 			},

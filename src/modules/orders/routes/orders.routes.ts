@@ -19,13 +19,18 @@ const priceOutputSchema = z.object({
     formatted: z.string(),
 });
 
+const productSnapshotSchema = z.object({
+    name: z.string(),
+    imageUrl: z.string(),
+    optionLabels: z.record(z.string(), z.string()).optional(),
+}).passthrough();
+
 const orderItemSchema = z.object({
     id: z.string().uuid(),
     quantity: z.number(),
     price: priceOutputSchema,
     subtotal: priceOutputSchema,
-    // TODO  POSSIVEL ERROR FUTURO - MANTER PARA TESTE
-    product: z.record(z.string(), z.string()),
+    product: productSnapshotSchema,
 });
 
 const orderDetailSchema = z.object({
@@ -52,8 +57,15 @@ const orderDetailSchema = z.object({
         })
         .nullable(),
 
-    // TODO - POSSIVEL ERROR FUTURO - MANTER PARA TESTE
-    shippingAddress: z.record(z.string(), z.string()),
+    shippingAddress: z.object({
+        recipientName: z.string(),
+        street: z.string(),
+        city: z.string(),
+        state: z.string(),
+        zipCode: z.string(),
+        country: z.string(),
+        complement: z.string().nullish(),
+    }).passthrough(),
     paymentMethod: z
         .object({
             type: z.string(),
@@ -74,8 +86,7 @@ const orderSummarySchema = z.object({
     items: z.array(
         z.object({
             quantity: z.number(),
-            // TODO -  POSSIVEL ERROR FUTURO - MANTER PARA TESTE
-            product: z.record(z.string(), z.string()),
+            product: productSnapshotSchema,
         }),
     ),
     createdAt: z.date(),

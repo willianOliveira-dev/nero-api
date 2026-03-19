@@ -1,4 +1,4 @@
-import { and, desc, eq, gt } from 'drizzle-orm';
+import { and, desc, eq, gt, ne } from 'drizzle-orm';
 import { db } from '@/lib/db/connection';
 import { orders } from '@/lib/db/schemas/index.schema';
 import type {
@@ -35,6 +35,8 @@ export class OrdersRepository {
 
         if (status) {
             conditions.push(eq(orders.status, status));
+        } else {
+            conditions.push(ne(orders.status, 'pending'));
         }
         if (cursor) {
             conditions.push(gt(orders.id, cursor));
@@ -68,6 +70,8 @@ export class OrdersRepository {
 
         if (status) {
             conditions.push(eq(orders.status, status));
+        } else {
+            conditions.push(ne(orders.status, 'pending'));
         }
         if (cursor) {
             conditions.push(gt(orders.id, cursor));

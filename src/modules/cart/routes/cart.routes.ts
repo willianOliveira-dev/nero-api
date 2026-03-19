@@ -59,6 +59,7 @@ const cartResponseSchema = z.object({
 		subtotal: priceOutputSchema,
 		shipping: priceOutputSchema,
 		tax: priceOutputSchema,
+		discount: priceOutputSchema,
 		total: priceOutputSchema,
 		itemCount: z.number(),
 	}),

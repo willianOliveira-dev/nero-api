@@ -28,7 +28,7 @@ const addressBaseSchema = z.object({
 
     zipCode: z
         .string()
-        .regex(/^\d{5}(-\d{4})?$|^\d{8}$/, 'CEP inválido.')
+        .regex(/^\d{5}(-\d{3})?$|^\d{8}$/, 'CEP inválido.')
         .nonempty('CEP é obrigatório.'),
 
     country: z
@@ -44,18 +44,18 @@ const addressBaseSchema = z.object({
         .nullable(),
 });
 
-// ── POST /v1/me/addresses ─────────────────────────────────────
+
 export const createAddressSchema = addressBaseSchema;
 
-// ── PATCH /v1/me/addresses/:id ────────────────────────────────
+
 export const updateAddressSchema = addressBaseSchema.partial();
 
-// ── Params ────────────────────────────────────────────────────
+
 export const addressParamsSchema = z.object({
     id: z.string().uuid({ message: 'id inválido.', version: 'v7' }),
 });
 
-// ── Tipos inferidos ───────────────────────────────────────────
+
 export type CreateAddressInput = z.infer<typeof createAddressSchema>;
 export type UpdateAddressInput = z.infer<typeof updateAddressSchema>;
 export type AddressParams = z.infer<typeof addressParamsSchema>;

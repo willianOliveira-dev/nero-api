@@ -107,15 +107,26 @@ export const paymentsRoutes: FastifyPluginAsyncZod = async (app) => {
     });
 
 
-    app.post('/webhooks/stripe', {
-        config: {
-            rawBody: true,
-        },
-        schema: {
-            tags: ['Webhooks'],
-            summary: 'Webhook do Stripe',
-            hide: true,
-        },
-        handler: stripeWebhookHandler,
+    app.register(async (childApp) => {
+
+        childApp.addContentTypeParser(
+            ['application/json', 'text/plain'],
+            { parseAs: 'string' },
+            function (request, payload, done) {
+                done(null, payload);
+            }
+        );
+
+        childApp.post('/webhooks/stripe', {
+            config: {
+                rawBody: true,
+            },
+            schema: {
+                tags: ['Webhooks'],
+                summary: 'Webhook do Stripe',
+                hide: true,
+            },
+            handler: stripeWebhookHandler,
+        });
     });
 };
