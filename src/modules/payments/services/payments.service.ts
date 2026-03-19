@@ -1,4 +1,4 @@
-import { stripe } from '@/lib/stripe';
+import { stripe } from '@/lib/stripe/stripe';
 import { env } from '@/config/env';
 import { db } from '@/lib/db/connection';
 import {
@@ -26,7 +26,7 @@ const ordersRepository = new OrdersRepository();
 const cartRepository = new CartRepository();
 
 export class PaymentsService {
-    // ── SetupIntent (save card) ─────────────────────────────────
+   
 
     async createSetupIntent(userId: string, email: string) {
         const customerId = await this.getOrCreateStripeCustomer(userId, email);
@@ -42,7 +42,7 @@ export class PaymentsService {
             metadata: { userId },
         });
 
-        // Create a pending record so we can track it
+
         await paymentsRepository.create({
             userId,
             stripePaymentMethodId: `pending_${setupIntent.id}`,
@@ -62,7 +62,7 @@ export class PaymentsService {
         };
     }
 
-    // ── Payment Methods CRUD ────────────────────────────────────
+   
 
     async listPaymentMethods(userId: string) {
         const methods = await paymentsRepository.findByUserId(userId);
@@ -86,21 +86,21 @@ export class PaymentsService {
             throw new NotFoundError('Método de pagamento');
         }
 
-        // Detach from Stripe
+      
         try {
             await stripe.paymentMethods.detach(method.stripePaymentMethodId);
         } catch {
-            // If it fails on Stripe side, still remove from DB
+      
         }
 
         await paymentsRepository.delete(id, userId);
         return { deleted: true };
     }
 
-    // ── PaymentIntent (charge) ──────────────────────────────────
+   
 
     async createPaymentIntent(userId: string, body: CreatePaymentIntentBody) {
-        // 1. Validate payment method belongs to user
+       
         const paymentMethod = await paymentsRepository.findById(
             body.paymentMethodId,
         );
@@ -113,7 +113,7 @@ export class PaymentsService {
             );
         }
 
-        // 2. Validate shipping address belongs to user
+      
         const address = await db.query.userAddresses.findFirst({
             where: and(
                 eq(userAddresses.id, body.shippingAddressId),
@@ -124,13 +124,13 @@ export class PaymentsService {
             throw new NotFoundError('Endereço de envio');
         }
 
-        // 3. Load cart using existing CartRepository
+   
         const cart = await cartRepository.findOrCreateByUserId(userId);
         if (!cart || cart.items.length === 0) {
             throw new BadRequestError('Carrinho vazio.');
         }
 
-        // 4. Calculate totals server-side from cart items
+
         let subtotalCents = 0;
         const orderItemsData: {
             productId: string;
@@ -175,7 +175,7 @@ export class PaymentsService {
             });
         }
 
-        // 5. Apply coupon discount
+
         let discountCents = 0;
         let couponId: string | null = null;
 
@@ -191,11 +191,11 @@ export class PaymentsService {
                     Number(cart.coupon.value),
                 );
             } else if (cart.coupon.type === 'free_shipping') {
-                discountCents = 800; // assuming fixed 8.00 shipping
+                discountCents = 800; 
             }
         }
 
-        // Override with couponCode from body if provided and no cart coupon
+      
         if (body.couponCode && !cart.coupon) {
             const coupon = await db.query.coupons.findFirst({
                 where: eq(coupons.code, body.couponCode),
@@ -219,12 +219,11 @@ export class PaymentsService {
         const totalCents = Math.max(
             subtotalCents + shippingCents - discountCents,
             50,
-        ); // Stripe minimum is 50 cents
+        ); 
 
-        // 6. Get Stripe customer
+      
         const customerId = await this.getOrCreateStripeCustomer(userId, '');
 
-        // 7. Create pending order in DB
         const shippingSnapshot: ShippingAddressSnapshot = {
             recipientName: address.recipientName,
             street: address.street,
@@ -251,7 +250,7 @@ export class PaymentsService {
             })
             .returning();
 
-        // Insert order items
+  
         if (orderItemsData.length > 0) {
             await db.insert(orderItems).values(
                 orderItemsData.map((item) => ({
@@ -261,7 +260,7 @@ export class PaymentsService {
             );
         }
 
-        // 8. Create PaymentIntent on Stripe
+     
         const paymentIntent = await stripe.paymentIntents.create({
             amount: totalCents,
             currency: env.STRIPE_CURRENCY,
@@ -273,7 +272,7 @@ export class PaymentsService {
             },
         });
 
-        // Save Stripe PI ID on order
+        
         await db
             .update(orders)
             .set({
@@ -289,15 +288,15 @@ export class PaymentsService {
         };
     }
 
-    // ── Webhook handlers ────────────────────────────────────────
+  
 
     async handleSetupIntentSucceeded(setupIntent: Stripe.SetupIntent) {
-        // Idempotency: check if already processed
+      
         const existing = await paymentsRepository.findByStripeSetupIntentId(
             setupIntent.id,
         );
         if (existing && existing.setupIntentStatus === 'succeeded') {
-            return; // Already processed
+            return; 
         }
 
         const pmId =
@@ -307,7 +306,7 @@ export class PaymentsService {
 
         if (!pmId) return;
 
-        // Retrieve full payment method from Stripe
+ 
         const pm = await stripe.paymentMethods.retrieve(pmId);
         const card = pm.card;
         if (!card) return;
@@ -318,7 +317,7 @@ export class PaymentsService {
         const brand = mapCardBrand(card.brand ?? 'unknown');
 
         if (existing) {
-            // Update the pending record
+          
             await db
                 .update(paymentMethods)
                 .set({
@@ -349,7 +348,7 @@ export class PaymentsService {
             });
         }
 
-        // If it's the first card, set as default
+  
         const allMethods = await paymentsRepository.findByUserId(userId);
         const succeededMethods = allMethods.filter(
             (m) => m.setupIntentStatus === 'succeeded',
@@ -375,16 +374,15 @@ export class PaymentsService {
 
         const order = await ordersRepository.findById(orderId);
         if (!order) return;
-        if (order.status !== 'pending') return; // Idempotency
+        if (order.status !== 'pending') return; 
 
-        // Use raw DB update instead of ordersRepository.updateStatus
-        // because the repo's type expects admin-level statuses only
+     
         await db
             .update(orders)
             .set({ status: 'paid', updatedAt: new Date() })
             .where(eq(orders.id, orderId));
 
-        // Save charge ID if available
+      
         const chargeId =
             typeof paymentIntent.latest_charge === 'string'
                 ? paymentIntent.latest_charge
@@ -397,7 +395,7 @@ export class PaymentsService {
                 .where(eq(orders.id, orderId));
         }
 
-        // Clear cart after successful payment
+      
         const userId = paymentIntent.metadata?.userId;
         if (userId) {
             const userCart = await db.query.carts.findFirst({
@@ -441,7 +439,7 @@ export class PaymentsService {
             .where(eq(orders.id, order.id));
     }
 
-    // ── Private ─────────────────────────────────────────────────
+ 
 
     private async getOrCreateStripeCustomer(
         userId: string,
@@ -474,7 +472,6 @@ export class PaymentsService {
     }
 }
 
-// ── Helpers ─────────────────────────────────────────────────────
 
 type CardBrand =
     | 'visa'

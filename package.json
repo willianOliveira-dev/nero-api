@@ -12,7 +12,8 @@
     "build": "tsc && cp -r public dist/public",
     "dev:start": "node dist/server.ts",
     "drizzle:migrate": "npx drizzle-kit generate && npx drizzle-kit migrate",
-    "db:seed": "tsx src/scripts/seed.ts"
+    "db:seed": "tsx src/scripts/seed.ts",
+    "stripe:listen": "stripe listen --forward-to localhost:8000/api/v1/webhooks/stripe"
   },
   "engines": {
     "node": "24.x"

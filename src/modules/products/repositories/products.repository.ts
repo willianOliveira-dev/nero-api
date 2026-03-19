@@ -195,22 +195,68 @@ export class ProductsRepository {
 			);
 		}
 
-		const offset = cursor ? parseInt(cursor, 10) : 0;
-
 		const activeSort = sort ?? 'recommended';
 		const priceQuery = sql`COALESCE("products"."price", (SELECT MIN("price") FROM "product_skus" WHERE "product_id" = "products"."id" AND "is_active" = true))`;
 		const orderBy = {
-			recommended: [desc(products.ratingAvg), desc(products.soldCount)],
-			newest: [desc(products.createdAt)],
-			price_asc: [sql`${priceQuery} asc nulls last`],
-			price_desc: [sql`${priceQuery} desc nulls last`],
-		}[activeSort] ?? [desc(products.createdAt)];
+			recommended: [desc(products.ratingAvg), desc(products.soldCount), desc(products.id)],
+			newest: [desc(products.createdAt), desc(products.id)],
+			price_asc: [sql`${priceQuery} asc nulls last`, asc(products.id)],
+			price_desc: [sql`${priceQuery} desc nulls last`, desc(products.id)],
+		}[activeSort] ?? [desc(products.createdAt), desc(products.id)];
+
+		if (cursor) {
+			const reference = await db.query.products.findFirst({
+				where: eq(products.id, cursor),
+				columns: { id: true, createdAt: true, ratingAvg: true, soldCount: true, price: true },
+				with: {
+					skus: {
+						where: eq(productSkus.isActive, true),
+						columns: { price: true },
+					},
+				},
+			});
+
+			if (reference) {
+				const refPrice = reference.price ?? Math.min(...(reference.skus.length ? reference.skus.map(s => s.price) : [0]));
+
+				if (activeSort === 'recommended') {
+					const refRatingAvg = reference.ratingAvg ?? '0';
+					conditions.push(
+						or(
+							lt(products.ratingAvg, refRatingAvg),
+							and(eq(products.ratingAvg, refRatingAvg), lt(products.soldCount, reference.soldCount)),
+							and(eq(products.ratingAvg, refRatingAvg), eq(products.soldCount, reference.soldCount), lt(products.id, cursor))
+						)!
+					);
+				} else if (activeSort === 'newest') {
+					conditions.push(
+						or(
+							lt(products.createdAt, reference.createdAt),
+							and(eq(products.createdAt, reference.createdAt), lt(products.id, cursor))
+						)!
+					);
+				} else if (activeSort === 'price_asc') {
+					conditions.push(
+						or(
+							gt(priceQuery, refPrice),
+							and(eq(priceQuery, refPrice), gt(products.id, cursor))
+						)!
+					);
+				} else if (activeSort === 'price_desc') {
+					conditions.push(
+						or(
+							lt(priceQuery, refPrice),
+							and(eq(priceQuery, refPrice), lt(products.id, cursor))
+						)!
+					);
+				}
+			}
+		}
 
 		const rows = await db.query.products.findMany({
 			where: and(...conditions),
 			orderBy,
 			limit: limit + 1,
-			offset: offset,
 			with: {
 				brand: {
 					columns: {
@@ -233,7 +279,7 @@ export class ProductsRepository {
 
 		const hasMore = rows.length > limit;
 		const data = hasMore ? rows.slice(0, limit) : rows;
-		const nextCursor = hasMore ? String(offset + limit) : null;
+		const nextCursor = hasMore ? data[data.length - 1].id : null;
 
 		const [{ total }] = await db
 			.select({ total: sql<number>`count(*)::int` })

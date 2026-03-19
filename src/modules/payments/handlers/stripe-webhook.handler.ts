@@ -1,5 +1,5 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
-import { stripe } from '@/lib/stripe';
+import { stripe } from '@/lib/stripe/stripe';
 import { env } from '@/config/env';
 import { PaymentsService } from '../services/payments.service';
 import type Stripe from 'stripe';
