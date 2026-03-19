@@ -2,7 +2,8 @@ CREATE TYPE "public"."coupon_type_enum" AS ENUM('percentage', 'fixed', 'free_shi
 CREATE TYPE "public"."home_section_type_enum" AS ENUM('top_selling', 'new_in', 'on_sale', 'free_shipping', 'by_gender', 'category_list', 'banner');--> statement-breakpoint
 CREATE TYPE "public"."order_status_enum" AS ENUM('pending', 'paid', 'processing', 'shipped', 'delivered', 'cancelled');--> statement-breakpoint
 CREATE TYPE "public"."card_brand_enum" AS ENUM('visa', 'mastercard', 'amex', 'discover', 'elo', 'hipercard', 'other');--> statement-breakpoint
-CREATE TYPE "public"."payment_method_type_enum" AS ENUM('card', 'paypal', 'pix');--> statement-breakpoint
+CREATE TYPE "public"."payment_method_type_enum" AS ENUM('card');--> statement-breakpoint
+CREATE TYPE "public"."setup_intent_status_enum" AS ENUM('pending', 'succeeded', 'cancelled');--> statement-breakpoint
 CREATE TYPE "public"."review_status_enum" AS ENUM('pending', 'approved', 'rejected');--> statement-breakpoint
 CREATE TYPE "public"."product_gender_enum" AS ENUM('men', 'women', 'kids', 'unisex');--> statement-breakpoint
 CREATE TYPE "public"."product_status_enum" AS ENUM('draft', 'active', 'archived');--> statement-breakpoint
@@ -160,15 +161,21 @@ CREATE TABLE "payment_methods" (
 	"id" text PRIMARY KEY NOT NULL,
 	"user_id" text NOT NULL,
 	"stripe_payment_method_id" text NOT NULL,
-	"type" "payment_method_type_enum" NOT NULL,
-	"brand" "card_brand_enum",
-	"last4" varchar(4),
-	"exp_month" smallint,
-	"exp_year" smallint,
-	"provider_email" text,
+	"stripe_setup_intent_id" text NOT NULL,
+	"setup_intent_status" "setup_intent_status_enum" DEFAULT 'pending' NOT NULL,
+	"type" "payment_method_type_enum" DEFAULT 'card' NOT NULL,
+	"brand" "card_brand_enum" NOT NULL,
+	"last4" varchar(4) NOT NULL,
+	"exp_month" smallint NOT NULL,
+	"exp_year" smallint NOT NULL,
+	"cardholder_name" text,
+	"fingerprint" text,
 	"is_default" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
-	CONSTRAINT "payment_methods_stripe_payment_method_id_unique" UNIQUE("stripe_payment_method_id")
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "payment_methods_stripe_payment_method_id_unique" UNIQUE("stripe_payment_method_id"),
+	CONSTRAINT "payment_methods_stripe_setup_intent_id_unique" UNIQUE("stripe_setup_intent_id"),
+	CONSTRAINT "payment_methods_fingerprint_unique" UNIQUE("fingerprint")
 );
 --> statement-breakpoint
 CREATE TABLE "product_images" (
@@ -366,6 +373,7 @@ CREATE INDEX "idx_orders_status" ON "orders" USING btree ("status");--> statemen
 CREATE INDEX "idx_orders_user_status" ON "orders" USING btree ("user_id","status");--> statement-breakpoint
 CREATE UNIQUE INDEX "idx_orders_stripe_pi" ON "orders" USING btree ("stripe_payment_intent_id");--> statement-breakpoint
 CREATE INDEX "idx_payment_methods_user_id" ON "payment_methods" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "idx_payment_methods_fingerprint" ON "payment_methods" USING btree ("fingerprint");--> statement-breakpoint
 CREATE INDEX "idx_product_images_product_id" ON "product_images" USING btree ("product_id");--> statement-breakpoint
 CREATE INDEX "idx_product_images_position" ON "product_images" USING btree ("product_id","position");--> statement-breakpoint
 CREATE INDEX "idx_product_skus_product_id" ON "product_skus" USING btree ("product_id");--> statement-breakpoint

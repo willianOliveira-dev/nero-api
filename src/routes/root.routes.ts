@@ -12,6 +12,7 @@ import { reviewsRoutes } from '@/modules/reviews/routes/reviews.routes';
 import { swaggerRoutes } from '@/modules/swagger/routes/swagger.routes';
 import { usersRoutes } from '@/modules/users/routes/users.routes';
 import { wishlistRoutes } from '@/modules/wishlist/routes/wishlist.routes';
+import { paymentsRoutes } from '@/modules/payments/routes/payments.routes';
 
 export async function registerAppRouter(app: FastifyInstance): Promise<void> {
     await app.register(swaggerRoutes);
@@ -28,4 +29,5 @@ export async function registerAppRouter(app: FastifyInstance): Promise<void> {
     await app.register(cartRoutes, { prefix: '/api/v1/' });
     await app.register(ordersRoutes, { prefix: '/api/v1/' });
     await app.register(wishlistRoutes, { prefix: '/api/v1/' });
+    await app.register(paymentsRoutes, { prefix: '/api/v1/' });
 }

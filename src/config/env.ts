@@ -23,6 +23,9 @@ export const envSchema = z.object({
     GOOGLE_CLIENT_SECRET: z.string(),
     PRICE_LOCALE: z.string().default('pt-BR'),
     PRICE_CURRENCY: z.string().default('BRL'),
+    STRIPE_SECRET_KEY: z.string(),
+    STRIPE_WEBHOOK_SECRET: z.string(),
+    STRIPE_CURRENCY: z.string().default('brl'),
 });
 
 export type Env = z.infer<typeof envSchema>;

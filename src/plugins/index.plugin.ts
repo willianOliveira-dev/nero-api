@@ -6,12 +6,19 @@ import multipartPlugin from '@/plugins/multipart.plugin';
 import rateLimitPlugin from '@/plugins/rate-limit.plugin';
 import staticPlugin from '@/plugins/static.plugin';
 import swaggerPlugin from '@/plugins/swagger.plugin';
+import rawBody from 'fastify-raw-body';
 
 export async function registerPlugins(app: FastifyInstance) {
     await app.register(corsPlugin);
     await app.register(helmetPlugin);
     await app.register(rateLimitPlugin);
     await app.register(multipartPlugin);
+    await app.register(rawBody, {
+        field: 'rawBody',
+        global: false,
+        encoding: 'utf8',
+        runFirst: true,
+    });
 
     await app.register(authPlugin);
     await app.register(staticPlugin);
