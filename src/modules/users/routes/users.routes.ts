@@ -12,7 +12,7 @@ import { updateProfileSchema } from '../validations/users.validation';
 export const usersRoutes: FastifyPluginAsyncZod = async (app) => {
     app.addHook('preHandler', app.authenticate);
 
-    // ── GET /v1/me ──────────────────────────────────────────────
+ 
     app.get('/me', {
         schema: {
             tags: ['Users'],
@@ -35,7 +35,6 @@ export const usersRoutes: FastifyPluginAsyncZod = async (app) => {
         handler: getMeHandler,
     });
 
-    // ── PATCH /v1/me ────────────────────────────────────────────
     app.patch('/me', {
         schema: {
             tags: ['Users'],
@@ -56,7 +55,6 @@ export const usersRoutes: FastifyPluginAsyncZod = async (app) => {
         handler: updateMeHandler,
     });
 
-    // ── POST /v1/me/avatar/presign ──────────────────────────────
     app.post('/me/avatar/presign', {
         schema: {
             tags: ['Users'],
@@ -76,7 +74,6 @@ export const usersRoutes: FastifyPluginAsyncZod = async (app) => {
         handler: presignAvatarHandler,
     });
 
-    // ── PATCH /v1/me/avatar/confirm ─────────────────────────────
     app.patch('/me/avatar/confirm', {
         schema: {
             tags: ['Users'],
@@ -94,7 +91,6 @@ export const usersRoutes: FastifyPluginAsyncZod = async (app) => {
         handler: confirmAvatarHandler,
     });
 
-    // ── DELETE /v1/me/avatar ────────────────────────────────────
     app.delete('/me/avatar', {
         schema: {
             tags: ['Users'],
