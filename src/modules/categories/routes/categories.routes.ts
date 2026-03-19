@@ -16,15 +16,13 @@ import {
     reorderCategoriesSchema,
     updateCategorySchema,
 } from '../validations/categories.validation';
-
 const categoryResponseSchema = z.object({
     id: z.string().uuid(),
     name: z.string(),
     slug: z.string(),
-    parentId: z.string().uuid().nullable(),
-    iconUrl: z.string().url().nullable(),
-    imageUrl: z.string().url().nullable(),
-    sizeGuideUrl: z.string().url().nullable(),
+    parentId: z.string().uuid().nullish(),
+    iconUrl: z.string().url().nullish(),
+    imageUrl: z.string().url().nullish(),
     sortOrder: z.number(),
     isActive: z.boolean(),
     subcategories: z
@@ -33,7 +31,7 @@ const categoryResponseSchema = z.object({
                 id: z.string().uuid(),
                 name: z.string(),
                 slug: z.string(),
-                iconUrl: z.string().url().nullable(),
+                iconUrl: z.string().url().nullish(),
                 sortOrder: z.number(),
                 isActive: z.boolean(),
             }),
@@ -43,7 +41,6 @@ const categoryResponseSchema = z.object({
 
 export const categoriesRoutes: FastifyPluginAsyncZod = async (app) => {
 
-    // ── Rotas públicas ──────────────────────────────────────────
     
     app.get('/categories', {
         schema: {
@@ -68,7 +65,7 @@ export const categoriesRoutes: FastifyPluginAsyncZod = async (app) => {
         handler: getCategoryBySlugHandler,
     });
 
-    // ── Rotas admin ─────────────────────────────────────────────
+
     app.post('/admin/categories', {
         schema: {
             tags: ['Categories'],

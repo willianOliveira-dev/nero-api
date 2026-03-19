@@ -14,12 +14,6 @@ export class CategoriesRepository {
         return db.query.categories.findMany({
             where: eq(categories.isActive, true),
             orderBy: asc(categories.sortOrder),
-            with: {
-                subcategories: {
-                    where: eq(categories.isActive, true),
-                    orderBy: asc(categories.sortOrder),
-                },
-            },
         });
     }
 
@@ -30,12 +24,6 @@ export class CategoriesRepository {
         return (
             db.query.categories.findFirst({
                 where: eq(categories.slug, slug),
-                with: {
-                    subcategories: {
-                        where: eq(categories.isActive, true),
-                        orderBy: asc(categories.sortOrder),
-                    },
-                },
             }) ?? null
         );
     }
@@ -47,7 +35,6 @@ export class CategoriesRepository {
         return (
             db.query.categories.findFirst({
                 where: eq(categories.id, id),
-                with: { subcategories: true },
             }) ?? null
         );
     }
