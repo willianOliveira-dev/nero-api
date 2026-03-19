@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq , inArray} from 'drizzle-orm';
 import { db } from '@/lib/db/connection';
 import { wishlistItems, wishlists, products } from '@/lib/db/schemas/index.schema';
 
@@ -132,5 +132,33 @@ export class WishlistRepository {
 		});
 
 		return !!item;
+	}
+
+	/**
+	 * Verifica quais produtos de uma lista estão na wishlist do usuário.
+	 * Retorna um Set com os IDs dos produtos favoritados.
+	 */
+	async findWishlistedProductIds(userId: string, productIds: string[]): Promise<Set<string>> {
+		if (!productIds.length) return new Set();
+
+		const wishlist = await db.query.wishlists.findFirst({
+			where: and(
+				eq(wishlists.userId, userId),
+				eq(wishlists.isDefault, true),
+			),
+			columns: { id: true },
+		});
+
+		if (!wishlist) return new Set();
+
+		const items = await db.query.wishlistItems.findMany({
+			where: and(
+				eq(wishlistItems.wishlistId, wishlist.id),
+				inArray(wishlistItems.productId, productIds),
+			),
+			columns: { productId: true },
+		});
+
+		return new Set(items.map((i) => i.productId));
 	}
 }
