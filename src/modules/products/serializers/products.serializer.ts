@@ -157,6 +157,7 @@ type CartRulesOutput = {
 
 export type RawProductCardInput = Omit<RawProduct, 'skus'> & {
 	skus?: Pick<RawSku, 'price' | 'isActive'>[];
+	isWishlisted?: boolean;
 };
 
 
@@ -200,6 +201,9 @@ export function serializeProductCard(product: RawProductCardInput) {
 			sold: product.soldCount,
 		},
 		freeShipping: product.freeShipping,
+		userContext: product.isWishlisted !== undefined 
+			? { isWishlisted: product.isWishlisted }
+			: undefined,
 	};
 }
 

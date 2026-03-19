@@ -11,6 +11,7 @@ declare module 'fastify' {
   }
   interface FastifyInstance {
     authenticate: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
+    optionalAuthenticate: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
   }
 }
 
@@ -26,6 +27,16 @@ export default fp(
       }
 
       request.session = session;
+    });
+
+    app.decorate('optionalAuthenticate', async (request: FastifyRequest, _: FastifyReply) => {
+      const session = await auth.api.getSession({
+        headers: fromNodeHeaders(request.headers),
+      });
+
+      if (session) {
+        request.session = session;
+      }
     });
   },
   {

@@ -18,7 +18,8 @@ import { ProductsService } from '../services/products.service';
 const productsService = new ProductsService();
 
 export const searchProductsHandler: SearchProductsHandler = async (request, reply) => {
-	const result = await productsService.search(request.query);
+	const userId = request.session?.user?.id;
+	const result = await productsService.search(request.query, userId);
 	return reply.status(200).send(result);
 };
 

@@ -130,6 +130,7 @@ const productCardSchema = z.object({
 	brand: brandSchema,
 	rating: ratingSchema,
 	freeShipping: z.boolean(),
+	userContext: z.object({ isWishlisted: z.boolean() }).optional(),
 });
 
 const productListSchema = z.object({
@@ -195,6 +196,7 @@ export const productsRoutes: FastifyPluginAsyncZod = async (app) => {
 			querystring: searchProductsSchema,
 			response: { 200: productListSchema },
 		},
+		preHandler: [app.optionalAuthenticate],
 		handler: searchProductsHandler,
 	});
 
@@ -206,6 +208,7 @@ export const productsRoutes: FastifyPluginAsyncZod = async (app) => {
 			params: productSlugParamsSchema,
 			response: { 200: productDetailSchema },
 		},
+		preHandler: [app.optionalAuthenticate],
 		handler: getProductBySlugHandler,
 	});
 

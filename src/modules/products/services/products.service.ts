@@ -1,6 +1,7 @@
 import { StorageService } from '@/modules/storage/services/storage.service';
 import { ConflictError, NotFoundError, BadRequestError } from '@/shared/errors/app.error';
 import { ProductsRepository } from '../repositories/products.repository';
+import { WishlistRepository } from '@/modules/wishlist/repositories/wishlist.repository';
 import {
 	serializeProductDetail,
 	serializeProductList,
@@ -16,6 +17,7 @@ import type {
 } from '../validations/products.validation';
 
 const productsRepository = new ProductsRepository();
+const wishlistRepository = new WishlistRepository();
 const storageService = new StorageService();
 
 export class ProductsService {
@@ -29,10 +31,24 @@ export class ProductsService {
 		return serializeProductDetail(product, isWishlisted);
 	}
 
-	async search(filters: SearchProductsInput) {
+	async search(filters: SearchProductsInput, userId?: string) {
 		const result = await productsRepository.search(filters);
+
+		let wishlistedIds = new Set<string>();
+		if (userId && result.data.length > 0) {
+			wishlistedIds = await wishlistRepository.findWishlistedProductIds(
+				userId,
+				result.data.map((r) => r.id)
+			);
+		}
+
+		const mappedData = result.data.map((product) => ({
+			...product,
+			isWishlisted: wishlistedIds.has(product.id)
+		})) as any;
+
 		return {
-			items: serializeProductList(result.data),
+			items: serializeProductList(mappedData),
 			total: result.total,
 			nextCursor: result.nextCursor,
 			hasMore: result.hasMore,

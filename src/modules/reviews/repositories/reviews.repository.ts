@@ -4,6 +4,7 @@ import {
     productReviews,
     reviewLikes,
     reviewMedia,
+    products,
 } from '@/lib/db/schemas/index.schema';
 import type {
     CreateReviewInput,
@@ -65,7 +66,7 @@ export class ReviewsRepository {
             const [review] = await tx.insert(productReviews).values({
                 ...reviewData,
                 userId,
-                status: 'pending', // Reviews start as pending for moderation
+                status: 'approved', // Auto-approve for now so mobile users see their reviews immediately
             }).returning();
 
             if (media && media.length > 0) {
@@ -80,6 +81,29 @@ export class ReviewsRepository {
                     }))
                 );
             }
+
+            // --- Recalculate product rating ---
+            const [stats] = await tx
+                .select({
+                    count: sql<number>`count(*)::int`,
+                    avg: sql<number>`avg(rating)::numeric(3,2)`,
+                })
+                .from(productReviews)
+                .where(
+                    and(
+                        eq(productReviews.productId, review.productId),
+                        eq(productReviews.status, 'approved')
+                    )
+                );
+
+            await tx
+                .update(products)
+                .set({
+                    ratingCount: stats.count || 0,
+                    ratingAvg: stats.avg ? String(stats.avg) : '0.00',
+                })
+                .where(eq(products.id, review.productId));
+            // ----------------------------------
 
             return review;
         });

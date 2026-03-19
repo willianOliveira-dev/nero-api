@@ -4,6 +4,7 @@ import { productImages, productSkus, products } from '@/lib/db/schemas/index.sch
 import { NotFoundError } from '@/shared/errors/app.error';
 import { serializeProductCard } from '@/modules/products/serializers/products.serializer';
 import { HomeRepository } from '../repositories/home.repository';
+import { WishlistRepository } from '@/modules/wishlist/repositories/wishlist.repository';
 import type {
     CreateHomeSectionInput,
     ReorderHomeSectionsInput,
@@ -12,6 +13,7 @@ import type {
 } from '../validations/home.validation';
 
 const homeRepository = new HomeRepository();
+const wishlistRepository = new WishlistRepository();
 
 type SectionFilterJson = {
     gender?: 'men' | 'women' | 'kids' | 'unisex';
@@ -22,23 +24,23 @@ type SectionFilterJson = {
 type RawSection = Awaited<ReturnType<HomeRepository['findAllActive']>>[number];
 
 export class HomeService {
-    async getHome(genderQuery?: string) {
+    async getHome(userId?: string, genderQuery?: string) {
         const sections = await homeRepository.findAllActive();
 
         const resolved = await Promise.all(
-            sections.map((section) => this.resolveSection(section, genderQuery)),
+            sections.map((section) => this.resolveSection(section, userId, genderQuery)),
         );
 
         return resolved;
     }
 
-    async getSectionBySlug(slug: string) {
+    async getSectionBySlug(slug: string, userId?: string) {
         const section = await homeRepository.findBySlug(slug);
         if (!section) {
             throw new NotFoundError('Seção não encontrada.');
         }
 
-        return this.resolveSection(section);
+        return this.resolveSection(section, userId);
     }
 
     async listAll() {
@@ -81,7 +83,7 @@ export class HomeService {
      * Resolve o conteúdo de uma seção baseado no seu type.
      * category_list e banner retornam items vazio por ora.
      */
-    private async resolveSection(section: RawSection, globalGender?: string) {
+    private async resolveSection(section: RawSection, userId?: string, globalGender?: string) {
         const type = section.type as SectionType;
         const filter = (section.filterJson ?? {}) as SectionFilterJson;
 
@@ -94,7 +96,7 @@ export class HomeService {
         ];
 
         if (productListTypes.includes(type)) {
-            const items = await this.resolveProductList(type, filter, globalGender);
+            const items = await this.resolveProductList(type, filter, userId, globalGender);
             return { ...section, items };
         }
 
@@ -110,6 +112,7 @@ export class HomeService {
     private async resolveProductList(
         type: SectionType,
         filter: SectionFilterJson,
+        userId?: string,
         globalGender?: string,
     ) {
         const limit = filter.limit ?? 10;
@@ -177,6 +180,17 @@ export class HomeService {
             },
         });
 
-        return rows.map((product) => serializeProductCard(product as any));
+        let wishlistedIds = new Set<string>();
+        if (userId && rows.length > 0) {
+            wishlistedIds = await wishlistRepository.findWishlistedProductIds(
+                userId,
+                rows.map((r) => r.id)
+            );
+        }
+
+        return rows.map((product) => serializeProductCard({
+            ...product,
+            isWishlisted: wishlistedIds.has(product.id)
+        } as any));
     }
 }

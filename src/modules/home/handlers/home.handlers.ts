@@ -13,12 +13,14 @@ const homeService = new HomeService();
 
 export const getHomeHandler: GetHomeHandler = async (request, reply) => {
     const { gender } = request.query;
-    const sections = await homeService.getHome(gender);
+    const userId = request.session?.user?.id;
+    const sections = await homeService.getHome(userId, gender);
     return reply.status(200).send(sections);
 };
 
 export const getHomeSectionHandler: GetHomeSectionHandler = async (request, reply) => {
-    const section = await homeService.getSectionBySlug(request.params.id);
+    const userId = request.session?.user?.id;
+    const section = await homeService.getSectionBySlug(request.params.id, userId);
     return reply.status(200).send(section);
 };
 

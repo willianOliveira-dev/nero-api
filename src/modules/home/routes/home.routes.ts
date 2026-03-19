@@ -55,6 +55,7 @@ const productCardSchema = z.object({
     brand: brandSchema,
     rating: ratingSchema,
     freeShipping: z.boolean(),
+    userContext: z.object({ isWishlisted: z.boolean() }).optional(),
 });
 
 const homeSectionSchema = z.object({
@@ -105,6 +106,7 @@ export const homeRoutes: FastifyPluginAsyncZod = async (app) => {
             querystring: getHomeQuerySchema,
             response: { 200: z.array(homeSectionSchema) },
         },
+        preHandler: [app.optionalAuthenticate],
         handler: getHomeHandler,
     });
 
@@ -116,6 +118,7 @@ export const homeRoutes: FastifyPluginAsyncZod = async (app) => {
             params: homeSectionSlugParamsSchema,
             response: { 200: homeSectionSchema },
         },
+        preHandler: [app.optionalAuthenticate],
         handler: getHomeSectionHandler,
     });
 
