@@ -127,6 +127,8 @@ const productCardSchema = z.object({
 			hasPriceVariation: z.boolean(),
 		})
 		.nullable(),
+	compareAtPrice: priceOutputSchema.nullable(),
+	discountPercent: z.number().nullable(),
 	brand: brandSchema,
 	rating: ratingSchema,
 	freeShipping: z.boolean(),

@@ -13,6 +13,7 @@ import type {
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/lib/db/connection';
 import { productReviews } from '@/lib/db/schemas/index.schema';
+import type { ReviewMedia } from '@/lib/db/schemas/reviews-media.schema';
 const ordersRepository = new OrdersRepository();
 
 const CANCELLABLE_STATUSES = ['pending', 'paid'] as const;
@@ -23,6 +24,10 @@ type LoadedOrder = NonNullable<
 type OrderSummary = Awaited<
     ReturnType<OrdersRepository['findByUserId']>
 >['data'][number];
+
+type ReviewWithMedia = typeof productReviews.$inferSelect & {
+    media: ReviewMedia[];
+};
 
 export class OrdersService {
     async listOrders(userId: string, query: ListOrdersQuery) {
@@ -49,7 +54,7 @@ export class OrdersService {
         });
 
         const reviewMap = new Map();
-        for (const r of reviews) reviewMap.set(r.productId, r);
+        for (const r of reviews) {reviewMap.set(r.productId, r)};
 
         return serializeOrder(order, reviewMap);
     }
@@ -99,7 +104,7 @@ export class OrdersService {
     }
 }
 
-function serializeOrder(order: LoadedOrder, reviewMap: Map<string, any> = new Map()) {
+function serializeOrder(order: LoadedOrder, reviewMap: Map<string, ReviewWithMedia> = new Map()) {
     return {
         id: order.id,
         status: order.status,
@@ -139,10 +144,10 @@ function serializeOrder(order: LoadedOrder, reviewMap: Map<string, any> = new Ma
                     title: review.title,
                     comment: review.comment,
                     createdAt: review.createdAt,
-                    media: review.media?.map((m: any) => ({
+                    media: review.media?.map((m) => ({
                         id: m.id,
                         type: m.type,
-                        url: m.url
+                        url: m.imageUrl
                     })) || []
                 } : null,
             };

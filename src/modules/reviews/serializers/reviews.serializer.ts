@@ -21,7 +21,11 @@ export type RawReview = {
     }[] | null;
 };
 
-export function serializeReview(review: RawReview, likedByMe = false) {
+export function serializeReview(
+    review: RawReview,
+    likedByMe = false,
+    avatarMap?: Map<string, string | null>,
+) {
     return {
         id: review.id,
         rating: review.rating,
@@ -33,7 +37,7 @@ export function serializeReview(review: RawReview, likedByMe = false) {
         user: review.user ? {
             id: review.user.id,
             name: review.user.name,
-            avatar: review.user.image
+            avatar: avatarMap?.get(review.user.id) ?? review.user.image,
         } : null,
         likes: {
             count: review.likesCount,
@@ -48,6 +52,10 @@ export function serializeReview(review: RawReview, likedByMe = false) {
     };
 }
 
-export function serializeReviewList(reviews: RawReview[], userLikedIds: Set<string>) {
-    return reviews.map(r => serializeReview(r, userLikedIds.has(r.id)));
+export function serializeReviewList(
+    reviews: RawReview[],
+    userLikedIds: Set<string>,
+    avatarMap?: Map<string, string | null>,
+) {
+    return reviews.map(r => serializeReview(r, userLikedIds.has(r.id), avatarMap));
 }

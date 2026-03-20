@@ -79,7 +79,7 @@ const orderDetailSchema = z.object({
         zipCode: z.string(),
         country: z.string(),
         complement: z.string().nullish(),
-    }).passthrough(),
+    }).passthrough().nullable(),
     paymentMethod: z
         .object({
             type: z.string(),

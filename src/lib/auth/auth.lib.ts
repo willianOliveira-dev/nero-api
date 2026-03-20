@@ -5,7 +5,7 @@ import { localization } from 'better-auth-localization';
 import { env } from '@/config/env.js';
 import { db } from '@/lib/db/connection';
 import * as schema from '@/lib/db/schemas/index.schema';
-import { sendResetPasswordMail, sendVerificationOTPMail } from '@/lib/mailer.js';
+import { sendResetPasswordMail, sendVerificationOTPMail } from '@/lib/mail/mailer.js';
 
 export const auth = betterAuth({
     baseURL: env.BETTER_AUTH_URL,

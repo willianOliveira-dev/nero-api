@@ -3,6 +3,9 @@ import { NotFoundError } from '@/shared/errors/app.error';
 import { ReviewsRepository } from '../repositories/reviews.repository';
 import { serializeReviewList } from '../serializers/reviews.serializer';
 import type { CreateReviewInput, ListReviewsQuery } from '../validations/reviews.validation';
+import { db } from '@/lib/db/connection';
+import { userProfiles } from '@/lib/db/schemas/index.schema';
+import { inArray } from 'drizzle-orm';
 
 const reviewsRepository = new ReviewsRepository();
 const storageService = new StorageService();
@@ -11,8 +14,22 @@ export class ReviewsService {
     async list(query: ListReviewsQuery, userId?: string) {
         const { productId, limit, cursor } = query;
         const result = await reviewsRepository.findByProductId(productId, limit, cursor, userId);
+
+        const reviewerIds = [...new Set(result.data.map(r => r.userId))];
+        const avatarMap = new Map<string, string | null>();
+
+        if (reviewerIds.length > 0) {
+            const profiles = await db.query.userProfiles.findMany({
+                where: inArray(userProfiles.userId, reviewerIds),
+                columns: { userId: true, avatarUrl: true },
+            });
+            for (const p of profiles) {
+                avatarMap.set(p.userId, p.avatarUrl);
+            }
+        }
+
         return {
-            items: serializeReviewList(result.data as any, result.userLikedIds),
+            items: serializeReviewList(result.data, result.userLikedIds, avatarMap),
             hasMore: result.hasMore,
             nextCursor: result.nextCursor,
         };

@@ -1,20 +1,6 @@
-/**
- * products.serializer.ts
- * ─────────────────────────────────────────────────────────────
- * Serializa os dados brutos do banco para o payload da API.
- *
- * Campos NUNCA aceitos do cliente (sempre computados):
- *   - hasVariations
- *   - pricing.*
- *   - sku.isOutOfStock
- *   - simpleProduct.isOutOfStock
- *   - rating.average
- * ─────────────────────────────────────────────────────────────
- */
-
 import { Price, type PriceOutput, type ProductPriceOutput } from '@/shared/utils/price.util';
 
-// ── Raw Types (from DB joins) ─────────────────────────────────
+
 
 export type RawBrand = {
 	id: string;
@@ -103,7 +89,6 @@ export type RawProduct = {
 	images?: RawImage[];
 };
 
-// ── Computed Types (output) ───────────────────────────────────
 
 type PricingOutput = {
 	displayPriceMin: PriceOutput;
@@ -172,6 +157,16 @@ export function serializeProductCard(product: RawProductCardInput) {
 		product.images?.[0]?.url ??
 		null;
 
+	let compareAtPrice: PriceOutput | null = null;
+	let discountPercent: number | null = null;
+
+	if (!product.hasVariations && product.price && product.compareAtPrice && product.compareAtPrice > product.price) {
+		compareAtPrice = Price.toOutput(product.compareAtPrice);
+		discountPercent = Math.round(
+			((product.compareAtPrice - product.price) / product.compareAtPrice) * 100,
+		);
+	}
+
 	return {
 		id: product.id,
 		name: product.name,
@@ -192,6 +187,8 @@ export function serializeProductCard(product: RawProductCardInput) {
 					hasPriceVariation: false,
 				}
 				: null,
+		compareAtPrice,
+		discountPercent,
 		brand: product.brand
 			? { name: product.brand.name, slug: product.brand.slug }
 			: null,
@@ -234,7 +231,6 @@ export function serializeProductDetail(
 		});
 	}
 
-	//  Compute variations output
 	const variationTypes: VariationTypeOutput[] | null =
 		product.hasVariations && product.variationTypes?.length
 			? product.variationTypes
@@ -255,19 +251,16 @@ export function serializeProductDetail(
 				}))
 			: null;
 
-	//  Compute SKUs output
 	const skus: SkuOutput[] | null =
 		product.hasVariations && product.skus?.length
 			? product.skus.map((sku) => serializeSku(sku))
 			: null;
 
-	//  Compute pricing (NUNCA salvo no banco)
 	const pricing: PricingOutput | null =
 		product.hasVariations && product.skus?.length
 			? computePricing(product.skus)
 			: null;
 
-	//  Simple product (sem variações)
 	const simpleProduct: SimpleProductOutput | null =
 		!product.hasVariations && product.price != null
 			? {

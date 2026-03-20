@@ -27,8 +27,6 @@ const paymentMethodSchema = z.object({
 
 
 export const paymentsRoutes: FastifyPluginAsyncZod = async (app) => {
-	app.addHook('preHandler', app.authenticate);
-
     app.post('/me/payment-methods/setup-intent', {
         schema: {
             tags: ['Payment Methods'],
@@ -42,7 +40,7 @@ export const paymentsRoutes: FastifyPluginAsyncZod = async (app) => {
                 }),
             },
         },
-        
+        preHandler: [app.authenticate],
         handler: createSetupIntentHandler,
     });
 
@@ -55,7 +53,7 @@ export const paymentsRoutes: FastifyPluginAsyncZod = async (app) => {
                 200: z.array(paymentMethodSchema),
             },
         },
-        
+        preHandler: [app.authenticate],
         handler: listPaymentMethodsHandler,
     });
 
@@ -69,7 +67,7 @@ export const paymentsRoutes: FastifyPluginAsyncZod = async (app) => {
                 200: paymentMethodSchema,
             },
         },
-        
+        preHandler: [app.authenticate],
         handler: setDefaultPaymentMethodHandler,
     });
 
@@ -85,7 +83,7 @@ export const paymentsRoutes: FastifyPluginAsyncZod = async (app) => {
                 }),
             },
         },
-        
+        preHandler: [app.authenticate],
         handler: deletePaymentMethodHandler,
     });
 
@@ -104,7 +102,7 @@ export const paymentsRoutes: FastifyPluginAsyncZod = async (app) => {
                 }),
             },
         },
-        
+        preHandler: [app.authenticate],
         handler: createPaymentIntentHandler,
     });
 
