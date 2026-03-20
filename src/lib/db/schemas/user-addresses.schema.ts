@@ -1,12 +1,3 @@
-/**
- * user-addresses.schema.ts
- * ─────────────────────────────────────────────────────────────
- * Múltiplos endereços por usuário.
- * Apenas 1 pode ter isDefault = true por usuário.
- * Regra de unicidade do isDefault deve ser aplicada na camada
- * de Service (via transaction) — não via constraint de banco.
- * ─────────────────────────────────────────────────────────────
- */
 
 import {
     boolean,
@@ -19,7 +10,7 @@ import {
 import { uuidv7 } from 'uuidv7';
 import { user } from './auth.schema';
 
-// ── Table ─────────────────────────────────────────────────────
+
 export const userAddresses = pgTable(
     'user_addresses',
     {
@@ -43,6 +34,6 @@ export const userAddresses = pgTable(
     (t) => [index('idx_user_addresses_user_id').on(t.userId)],
 );
 
-// ── Types ─────────────────────────────────────────────────────
+
 export type UserAddress = typeof userAddresses.$inferSelect;
 export type NewUserAddress = typeof userAddresses.$inferInsert;

@@ -1,18 +1,10 @@
-/**
- * user-profiles.schema.ts
- * ─────────────────────────────────────────────────────────────
- * Extensão da tabela `user` do Better Auth.
- * Armazena dados extras: telefone, avatar, preferência de
- * gênero e o customer ID do Stripe.
- * Relação 1:1 com user.id
- * ─────────────────────────────────────────────────────────────
- */
+
 
 import { pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import { uuidv7 } from 'uuidv7';
 import { user } from './auth.schema';
 
-// ── Enum ──────────────────────────────────────────────────────
+
 export const genderPreferenceEnum = pgEnum('gender_preference_enum', [
     'men',
     'women',
@@ -20,7 +12,7 @@ export const genderPreferenceEnum = pgEnum('gender_preference_enum', [
     'unisex',
 ]);
 
-// ── Table ─────────────────────────────────────────────────────
+
 export const userProfiles = pgTable('user_profiles', {
     id: text('id')
         .primaryKey()
@@ -36,6 +28,6 @@ export const userProfiles = pgTable('user_profiles', {
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
-// ── Types ─────────────────────────────────────────────────────
+
 export type UserProfile = typeof userProfiles.$inferSelect;
 export type NewUserProfile = typeof userProfiles.$inferInsert;

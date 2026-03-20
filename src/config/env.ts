@@ -26,6 +26,7 @@ export const envSchema = z.object({
     STRIPE_SECRET_KEY: z.string(),
     STRIPE_WEBHOOK_SECRET: z.string(),
     STRIPE_CURRENCY: z.string().default('brl'),
+    RESEND_API_KEY: z.string(),
 });
 
 export type Env = z.infer<typeof envSchema>;

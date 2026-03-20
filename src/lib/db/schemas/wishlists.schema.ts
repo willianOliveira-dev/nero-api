@@ -1,17 +1,3 @@
-/**
- * wishlists.schema.ts
- * ─────────────────────────────────────────────────────────────
- * Múltiplas listas de favoritos por usuário.
- * Exemplos: "My Favorite (12)", "T-Shirts (4)".
- *
- * isDefault: lista que recebe o produto ao clicar no coração
- *   sem o usuário escolher uma lista específica.
- *
- * wishlist_items: UNIQUE em (wishlistId, productId) para
- *   garantir que o mesmo produto não entre duplicado.
- *   Adicionar produto já existente é idempotente (200 OK).
- * ─────────────────────────────────────────────────────────────
- */
 
 import {
     boolean,
@@ -26,7 +12,7 @@ import { uuidv7 } from 'uuidv7';
 import { user } from './auth.schema';
 import { products } from './products.schema';
 
-// ── wishlists ─────────────────────────────────────────────────
+
 export const wishlists = pgTable(
     'wishlists',
     {
@@ -43,7 +29,7 @@ export const wishlists = pgTable(
     (t) => [index('idx_wishlists_user_id').on(t.userId)],
 );
 
-// ── wishlist_items ────────────────────────────────────────────
+
 export const wishlistItems = pgTable(
     'wishlist_items',
     {
@@ -64,7 +50,7 @@ export const wishlistItems = pgTable(
     ],
 );
 
-// ── Types ─────────────────────────────────────────────────────
+
 export type Wishlist = typeof wishlists.$inferSelect;
 export type NewWishlist = typeof wishlists.$inferInsert;
 export type WishlistItem = typeof wishlistItems.$inferSelect;

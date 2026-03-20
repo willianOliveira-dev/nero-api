@@ -1,16 +1,6 @@
-/**
- * auth.schema.ts
- * ─────────────────────────────────────────────────────────────
- * Tabelas gerenciadas pelo Better Auth.
- * NÃO editar estrutura manualmente — o Better Auth cria e
- * mantém estas tabelas via sua própria migração.
- * Exportadas aqui apenas para uso como FK nas demais tabelas.
- * ─────────────────────────────────────────────────────────────
- */
-
 import { boolean, index, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import {  uuidv7 } from 'uuidv7';
-// ── user ──────────────────────────────────────────────
+
 
 export const user = pgTable('user', {
     id: text('id')
@@ -27,7 +17,7 @@ export const user = pgTable('user', {
         .notNull(),
 });
 
-// ── session ──────────────────────────────────────────────
+
 
 export const session = pgTable(
     'session',
@@ -47,7 +37,7 @@ export const session = pgTable(
     },
     (table) => [index('session_userId_idx').on(table.userId)],
 );
-// ── account ──────────────────────────────────────────────
+
 export const account = pgTable(
     'account',
     {
@@ -72,7 +62,7 @@ export const account = pgTable(
     (table) => [index('account_userId_idx').on(table.userId)],
 );
 
-// ── verification ──────────────────────────────────────────────
+
 export const verification = pgTable(
     'verification',
     {
@@ -89,7 +79,7 @@ export const verification = pgTable(
     (table) => [index('verification_identifier_idx').on(table.identifier)],
 );
 
-// ── Types ─────────────────────────────────────────────────────
+
 export type User = typeof user.$inferSelect;
 export type NewUser = typeof user.$inferInsert;
 export type Session = typeof session.$inferSelect;
