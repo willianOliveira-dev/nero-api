@@ -26,7 +26,11 @@ export const envSchema = z.object({
     STRIPE_SECRET_KEY: z.string(),
     STRIPE_WEBHOOK_SECRET: z.string(),
     STRIPE_CURRENCY: z.string().default('brl'),
-    RESEND_API_KEY: z.string(),
+    SMTP_HOST: z.string().default('smtp.gmail.com'),
+    SMTP_PORT: z.coerce.number().default(587),
+    SMTP_USER: z.string(),
+    SMTP_PASS: z.string(),
+    SMTP_FROM: z.string(),
 });
 
 export type Env = z.infer<typeof envSchema>;
