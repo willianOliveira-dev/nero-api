@@ -27,10 +27,24 @@ const productSnapshotSchema = z.object({
 
 const orderItemSchema = z.object({
     id: z.string().uuid(),
+    productId: z.string().uuid().nullable(),
     quantity: z.number(),
     price: priceOutputSchema,
     subtotal: priceOutputSchema,
     product: productSnapshotSchema,
+    isReviewed: z.boolean(),
+    review: z.object({
+        id: z.string(),
+        rating: z.number(),
+        title: z.string().nullable(),
+        comment: z.string().nullable(),
+        createdAt: z.date(),
+        media: z.array(z.object({
+            id: z.string(),
+            type: z.enum(['image', 'video']),
+            url: z.string().url(),
+        })),
+    }).nullable().optional(),
 });
 
 const orderDetailSchema = z.object({

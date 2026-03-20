@@ -10,6 +10,9 @@ import type {
     UpdateOrderStatusInput,
 } from '../validations/orders.validation';
 
+import { and, eq } from 'drizzle-orm';
+import { db } from '@/lib/db/connection';
+import { productReviews } from '@/lib/db/schemas/index.schema';
 const ordersRepository = new OrdersRepository();
 
 const CANCELLABLE_STATUSES = ['pending', 'paid'] as const;
@@ -36,7 +39,19 @@ export class OrdersService {
         if (order.userId !== userId) {
             throw new ForbiddenError('Acesso negado.');
         }
-        return serializeOrder(order);
+
+        const reviews = await db.query.productReviews.findMany({
+            where: and(
+                eq(productReviews.orderId, id),
+                eq(productReviews.userId, userId),
+            ),
+            with: { media: true }
+        });
+
+        const reviewMap = new Map();
+        for (const r of reviews) reviewMap.set(r.productId, r);
+
+        return serializeOrder(order, reviewMap);
     }
 
     async cancelOrder(id: string, userId: string) {
@@ -59,8 +74,6 @@ export class OrdersService {
 
         return serializeOrder(await this.findOrFail(id));
     }
-
-    // ── Admin ──────────────────────────────────────────────────
 
     async listAllOrders(query: ListOrdersQuery) {
         const result = await ordersRepository.findAll(query);
@@ -86,7 +99,7 @@ export class OrdersService {
     }
 }
 
-function serializeOrder(order: LoadedOrder) {
+function serializeOrder(order: LoadedOrder, reviewMap: Map<string, any> = new Map()) {
     return {
         id: order.id,
         status: order.status,
@@ -108,15 +121,32 @@ function serializeOrder(order: LoadedOrder) {
                   last4: order.paymentMethod.last4,
               }
             : null,
-        items: order.items.map((item) => ({
-            id: item.id,
-            quantity: item.quantity,
-            price: Price.toOutput(item.unitPrice),
-            subtotal: Price.toOutput(
-                String(Number(item.unitPrice) * item.quantity),
-            ),
-            product: item.productSnapshot,
-        })),
+        items: order.items.map((item) => {
+            const review = item.productId ? reviewMap.get(item.productId) : null;
+            return {
+                id: item.id,
+                productId: item.productId,
+                quantity: item.quantity,
+                price: Price.toOutput(item.unitPrice),
+                subtotal: Price.toOutput(
+                    String(Number(item.unitPrice) * item.quantity),
+                ),
+                product: item.productSnapshot,
+                isReviewed: !!review,
+                review: review ? {
+                    id: review.id,
+                    rating: review.rating,
+                    title: review.title,
+                    comment: review.comment,
+                    createdAt: review.createdAt,
+                    media: review.media?.map((m: any) => ({
+                        id: m.id,
+                        type: m.type,
+                        url: m.url
+                    })) || []
+                } : null,
+            };
+        }),
         createdAt: order.createdAt,
         updatedAt: order.updatedAt,
     };

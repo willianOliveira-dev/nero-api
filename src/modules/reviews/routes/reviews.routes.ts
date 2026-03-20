@@ -99,6 +99,7 @@ export const reviewsRoutes: FastifyPluginAsyncZod = async (app) => {
                         signature: z.string(),
                         timestamp: z.number(),
                         folder: z.string(),
+                        publicId: z.string().optional(),
                         cloudName: z.string(),
                         apiKey: z.string(),
                     }),

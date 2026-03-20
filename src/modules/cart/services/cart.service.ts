@@ -198,8 +198,6 @@ export class CartService {
 		});
 	}
 
-	// ── Private ───────────────────────────────────────────────
-
 	/**
 	 * Retorna o estoque disponível para um produto/SKU.
 	 * Lança BadRequestError se o produto/SKU não for encontrado.
@@ -276,7 +274,13 @@ export class CartService {
 			0,
 		);
 
-		const shippingCents = subtotalCents === 0 ? 0 : 800;
+		const shippingCents =
+			subtotalCents === 0
+				? 0
+				: cart.items.reduce((acc, item) => {
+						if (item.product?.freeShipping) return acc;
+						return acc + 800;
+					}, 0);
 
 		const discountCents = cart.coupon
 			? this.calcDiscount(subtotalCents, cart.coupon)
@@ -343,8 +347,9 @@ export class CartService {
 							name: item.product.name,
 							slug: item.product.slug,
 							imageUrl:
-								item.product.images?.[0]?.url ?? null,
-						}
+									item.product.images?.[0]?.url ?? null,
+								freeShipping: item.product.freeShipping,
+							}
 						: null,
 					sku: item.sku
 						? {

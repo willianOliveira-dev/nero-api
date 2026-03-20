@@ -45,6 +45,7 @@ const cartResponseSchema = z.object({
 					name: z.string(),
 					slug: z.string(),
 					imageUrl: z.string().url().nullable(),
+					freeShipping: z.boolean(),
 				})
 				.nullable(),
 			sku: z
