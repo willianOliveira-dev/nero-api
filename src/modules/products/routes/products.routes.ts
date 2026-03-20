@@ -185,7 +185,9 @@ const imageSchema = z.object({
 
 
 
+
 export const productsRoutes: FastifyPluginAsyncZod = async (app) => {
+	app.addHook('preHandler', app.authenticate);
 	
 
 	app.get('/products/search', {
@@ -196,7 +198,7 @@ export const productsRoutes: FastifyPluginAsyncZod = async (app) => {
 			querystring: searchProductsSchema,
 			response: { 200: productListSchema },
 		},
-		preHandler: [app.optionalAuthenticate],
+		
 		handler: searchProductsHandler,
 	});
 
@@ -208,7 +210,7 @@ export const productsRoutes: FastifyPluginAsyncZod = async (app) => {
 			params: productSlugParamsSchema,
 			response: { 200: productDetailSchema },
 		},
-		preHandler: [app.optionalAuthenticate],
+		
 		handler: getProductBySlugHandler,
 	});
 
@@ -222,7 +224,7 @@ export const productsRoutes: FastifyPluginAsyncZod = async (app) => {
 			params: productParamsSchema,
 			response: { 200: productDetailSchema },
 		},
-		preHandler: app.authenticate,
+		
 		handler: getProductByIdHandler,
 	});
 
@@ -234,7 +236,7 @@ export const productsRoutes: FastifyPluginAsyncZod = async (app) => {
 			body: createProductSchema,
 			response: { 201: productDetailSchema },
 		},
-		preHandler: app.authenticate,
+		
 		handler: createProductHandler,
 	});
 
@@ -247,7 +249,7 @@ export const productsRoutes: FastifyPluginAsyncZod = async (app) => {
 			body: updateProductSchema,
 			response: { 200: productDetailSchema },
 		},
-		preHandler: app.authenticate,
+		
 		handler: updateProductHandler,
 	});
 
@@ -259,7 +261,7 @@ export const productsRoutes: FastifyPluginAsyncZod = async (app) => {
 			params: productParamsSchema,
 			response: { 200: z.object({ status: z.string() }) },
 		},
-		preHandler: app.authenticate,
+		
 		handler: archiveProductHandler,
 	});
 
@@ -273,7 +275,7 @@ export const productsRoutes: FastifyPluginAsyncZod = async (app) => {
 			body: updateSkuSchema,
 			response: { 200: z.object({ id: z.string() }) },
 		},
-		preHandler: app.authenticate,
+		
 		handler: updateSkuHandler,
 	});
 
@@ -286,7 +288,7 @@ export const productsRoutes: FastifyPluginAsyncZod = async (app) => {
 			params: productParamsSchema,
 			response: { 200: z.array(imageSchema) },
 		},
-		preHandler: app.authenticate,
+		
 		handler: listImagesHandler,
 	});
 
@@ -307,7 +309,7 @@ export const productsRoutes: FastifyPluginAsyncZod = async (app) => {
 				}),
 			},
 		},
-		preHandler: app.authenticate,
+		
 		handler: presignImageHandler,
 	});
 
@@ -320,7 +322,7 @@ export const productsRoutes: FastifyPluginAsyncZod = async (app) => {
 			body: confirmProductImageSchema,
 			response: { 201: imageSchema },
 		},
-		preHandler: app.authenticate,
+		
 		handler: confirmImageHandler,
 	});
 
@@ -333,7 +335,7 @@ export const productsRoutes: FastifyPluginAsyncZod = async (app) => {
 			body: updateProductImageSchema,
 			response: { 200: imageSchema },
 		},
-		preHandler: app.authenticate,
+		
 		handler: updateImageHandler,
 	});
 
@@ -345,7 +347,7 @@ export const productsRoutes: FastifyPluginAsyncZod = async (app) => {
 			params: imageParamsSchema,
 			response: { 200: z.object({ deleted: z.boolean() }) },
 		},
-		preHandler: app.authenticate,
+		
 		handler: deleteImageHandler,
 	});
 
@@ -358,7 +360,7 @@ export const productsRoutes: FastifyPluginAsyncZod = async (app) => {
 			body: reorderImagesSchema,
 			response: { 200: z.object({ reordered: z.boolean() }) },
 		},
-		preHandler: app.authenticate,
+		
 		handler: reorderImagesHandler,
 	});
 };

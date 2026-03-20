@@ -25,6 +25,7 @@ const brandSchema = z.object({
 });
 
 export const brandsRoutes: FastifyPluginAsyncZod = async (app) => {
+	app.addHook('preHandler', app.authenticate);
     app.get('/brands', {
         schema: {
             tags: ['Brands'],
@@ -54,7 +55,7 @@ export const brandsRoutes: FastifyPluginAsyncZod = async (app) => {
             body: createBrandSchema,
             response: { 201: z.object({ data: brandSchema }) },
         },
-        preHandler: [app.authenticate],
+        
         handler: createBrandHandler,
     });
 
@@ -67,7 +68,7 @@ export const brandsRoutes: FastifyPluginAsyncZod = async (app) => {
             body: updateBrandSchema,
             response: { 200: z.object({ data: brandSchema }) },
         },
-        preHandler: [app.authenticate],
+        
         handler: updateBrandHandler,
     });
 
@@ -79,7 +80,7 @@ export const brandsRoutes: FastifyPluginAsyncZod = async (app) => {
             params: brandParamsSchema,
             response: { 200: z.object({ data: brandSchema }) },
         },
-        preHandler: [app.authenticate],
+        
         handler: deleteBrandHandler,
     });
 
@@ -100,7 +101,7 @@ export const brandsRoutes: FastifyPluginAsyncZod = async (app) => {
                 }),
             },
         },
-        preHandler: [app.authenticate],
+        
         handler: presignLogoHandler,
     });
 };

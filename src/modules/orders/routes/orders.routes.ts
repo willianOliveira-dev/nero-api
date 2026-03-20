@@ -111,7 +111,9 @@ const metaSchema = z.object({
     nextCursor: z.string().uuid().nullable(),
 });
 
+
 export const ordersRoutes: FastifyPluginAsyncZod = async (app) => {
+	app.addHook('preHandler', app.authenticate);
     app.get('/orders', {
         schema: {
             tags: ['Orders'],
@@ -126,7 +128,7 @@ export const ordersRoutes: FastifyPluginAsyncZod = async (app) => {
                 }),
             },
         },
-        preHandler: [app.authenticate],
+        
         handler: listOrdersHandler,
     });
 
@@ -138,7 +140,7 @@ export const ordersRoutes: FastifyPluginAsyncZod = async (app) => {
             params: orderParamsSchema,
             response: { 200: orderDetailSchema },
         },
-        preHandler: [app.authenticate],
+        
         handler: getOrderHandler,
     });
 
@@ -150,7 +152,7 @@ export const ordersRoutes: FastifyPluginAsyncZod = async (app) => {
             params: orderParamsSchema,
             response: { 200: orderDetailSchema },
         },
-        preHandler: [app.authenticate],
+        
         handler: cancelOrderHandler,
     });
 
@@ -167,7 +169,7 @@ export const ordersRoutes: FastifyPluginAsyncZod = async (app) => {
                 }),
             },
         },
-        preHandler: [app.authenticate],
+        
         handler: listAllOrdersHandler,
     });
 
@@ -180,7 +182,7 @@ export const ordersRoutes: FastifyPluginAsyncZod = async (app) => {
             body: updateOrderStatusSchema,
             response: { 200: orderDetailSchema },
         },
-        preHandler: [app.authenticate],
+        
         handler: updateOrderStatusHandler,
     });
 };

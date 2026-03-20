@@ -37,7 +37,9 @@ const reviewResponseSchema = z.object({
     })),
 });
 
+
 export const reviewsRoutes: FastifyPluginAsyncZod = async (app) => {
+	app.addHook('preHandler', app.authenticate);
     app.get('/reviews', {
         schema: {
             tags: ['Reviews'],
@@ -68,7 +70,7 @@ export const reviewsRoutes: FastifyPluginAsyncZod = async (app) => {
                 }),
             },
         },
-        preHandler: [app.authenticate],
+        
         handler: createReviewHandler,
     });
 
@@ -84,7 +86,7 @@ export const reviewsRoutes: FastifyPluginAsyncZod = async (app) => {
                 }),
             },
         },
-        preHandler: [app.authenticate],
+        
         handler: toggleLikeHandler,
     });
 
@@ -106,7 +108,7 @@ export const reviewsRoutes: FastifyPluginAsyncZod = async (app) => {
                 }),
             },
         },
-        preHandler: [app.authenticate],
+        
         handler: presignMediaHandler,
     });
 };

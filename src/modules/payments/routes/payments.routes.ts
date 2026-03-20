@@ -25,7 +25,9 @@ const paymentMethodSchema = z.object({
     createdAt: z.date(),
 });
 
+
 export const paymentsRoutes: FastifyPluginAsyncZod = async (app) => {
+	app.addHook('preHandler', app.authenticate);
 
     app.post('/me/payment-methods/setup-intent', {
         schema: {
@@ -40,7 +42,7 @@ export const paymentsRoutes: FastifyPluginAsyncZod = async (app) => {
                 }),
             },
         },
-        preHandler: [app.authenticate],
+        
         handler: createSetupIntentHandler,
     });
 
@@ -53,7 +55,7 @@ export const paymentsRoutes: FastifyPluginAsyncZod = async (app) => {
                 200: z.array(paymentMethodSchema),
             },
         },
-        preHandler: [app.authenticate],
+        
         handler: listPaymentMethodsHandler,
     });
 
@@ -67,7 +69,7 @@ export const paymentsRoutes: FastifyPluginAsyncZod = async (app) => {
                 200: paymentMethodSchema,
             },
         },
-        preHandler: [app.authenticate],
+        
         handler: setDefaultPaymentMethodHandler,
     });
 
@@ -83,7 +85,7 @@ export const paymentsRoutes: FastifyPluginAsyncZod = async (app) => {
                 }),
             },
         },
-        preHandler: [app.authenticate],
+        
         handler: deletePaymentMethodHandler,
     });
 
@@ -102,7 +104,7 @@ export const paymentsRoutes: FastifyPluginAsyncZod = async (app) => {
                 }),
             },
         },
-        preHandler: [app.authenticate],
+        
         handler: createPaymentIntentHandler,
     });
 
@@ -112,7 +114,7 @@ export const paymentsRoutes: FastifyPluginAsyncZod = async (app) => {
         childApp.addContentTypeParser(
             ['application/json', 'text/plain'],
             { parseAs: 'string' },
-            function (request, payload, done) {
+            function (_request, payload, done) {
                 done(null, payload);
             }
         );

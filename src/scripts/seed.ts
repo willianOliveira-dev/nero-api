@@ -1,6 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
+import { drizzle } from 'drizzle-orm/neon-serverless';
 import { env } from '@/config/env';
 import { auth } from '../lib/auth/auth.lib';
 import { brands } from '../lib/db/schemas/brands.schema';
@@ -20,9 +19,14 @@ import { variationOptions } from '../lib/db/schemas/variation-options.schema';
 import { variationTypes } from '../lib/db/schemas/variation-types.schema';
 import { wishlistItems, wishlists } from '../lib/db/schemas/wishlists.schema';
 import { Price } from '../shared/utils/price.util';
+import { Pool, neonConfig } from '@neondatabase/serverless';
+import ws from 'ws';
 
-const client = postgres(env.DATABASE_URL);
-const db = drizzle(client, { schema });
+neonConfig.webSocketConstructor = ws;
+
+const pool = new Pool({ connectionString: env.DATABASE_URL });
+
+const db = drizzle(pool, { schema });
 
 const p = (reais: number) => Price.toInt(reais)!;
 
@@ -3648,7 +3652,7 @@ async function seed() {
         console.error('❌ Erro durante o seed:', error);
         throw error;
     } finally {
-        await client.end();
+        await pool.end();
     }
 }
 

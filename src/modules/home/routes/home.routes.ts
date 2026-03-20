@@ -97,7 +97,9 @@ const adminSectionSchema = z.object({
     updatedAt: z.date(),
 });
 
+
 export const homeRoutes: FastifyPluginAsyncZod = async (app) => {
+	app.addHook('preHandler', app.authenticate);
     app.get('/home', {
         schema: {
             tags: ['Home'],
@@ -106,7 +108,7 @@ export const homeRoutes: FastifyPluginAsyncZod = async (app) => {
             querystring: getHomeQuerySchema,
             response: { 200: z.array(homeSectionSchema) },
         },
-        preHandler: [app.optionalAuthenticate],
+        
         handler: getHomeHandler,
     });
 
@@ -118,7 +120,7 @@ export const homeRoutes: FastifyPluginAsyncZod = async (app) => {
             params: homeSectionSlugParamsSchema,
             response: { 200: homeSectionSchema },
         },
-        preHandler: [app.optionalAuthenticate],
+        
         handler: getHomeSectionHandler,
     });
 
@@ -129,7 +131,7 @@ export const homeRoutes: FastifyPluginAsyncZod = async (app) => {
             operationId: 'listHomeSections',
             response: { 200: z.array(adminSectionSchema) },
         },
-        preHandler: [app.authenticate],
+        
         handler: listHomeSectionsHandler,
     });
 
@@ -141,7 +143,7 @@ export const homeRoutes: FastifyPluginAsyncZod = async (app) => {
             body: createHomeSectionSchema,
             response: { 201: adminSectionSchema },
         },
-        preHandler: [app.authenticate],
+        
         handler: createHomeSectionHandler,
     });
 
@@ -154,7 +156,7 @@ export const homeRoutes: FastifyPluginAsyncZod = async (app) => {
             body: updateHomeSectionSchema,
             response: { 200: adminSectionSchema },
         },
-        preHandler: [app.authenticate],
+        
         handler: updateHomeSectionHandler,
     });
 
@@ -166,7 +168,7 @@ export const homeRoutes: FastifyPluginAsyncZod = async (app) => {
             params: homeSectionParamsSchema,
             response: { 200: z.object({ deleted: z.boolean() }) },
         },
-        preHandler: [app.authenticate],
+        
         handler: deleteHomeSectionHandler,
     });
 
@@ -178,7 +180,7 @@ export const homeRoutes: FastifyPluginAsyncZod = async (app) => {
             body: reorderHomeSectionsSchema,
             response: { 200: z.object({ reordered: z.boolean() }) },
         },
-        preHandler: [app.authenticate],
+        
         handler: reorderHomeSectionsHandler,
     });
 };

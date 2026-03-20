@@ -47,7 +47,7 @@ export default fp(
 
             transform: jsonSchemaTransform,
         });
-        // @ts-expect-error - O Scalar ainda referencia tipos do Fastify v4 (getDefaultRoute) que foram removidos na v5
+
         await app.register(scalarApiReference, {
             routePrefix: '/docs',
             configuration: {

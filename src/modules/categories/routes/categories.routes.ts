@@ -39,7 +39,9 @@ const categoryResponseSchema = z.object({
         .optional(),
 });
 
+
 export const categoriesRoutes: FastifyPluginAsyncZod = async (app) => {
+	app.addHook('preHandler', app.authenticate);
 
     
     app.get('/categories', {
@@ -74,7 +76,7 @@ export const categoriesRoutes: FastifyPluginAsyncZod = async (app) => {
             body: createCategorySchema,
             response: { 201: categoryResponseSchema },
         },
-        preHandler: [app.authenticate],
+        
         handler: createCategoryHandler,
     });
 
@@ -87,7 +89,7 @@ export const categoriesRoutes: FastifyPluginAsyncZod = async (app) => {
             body: updateCategorySchema,
             response: { 200: categoryResponseSchema },
         } as const,
-        preHandler: [app.authenticate],
+        
         handler: updateCategoryHandler,
     });
 
@@ -99,7 +101,7 @@ export const categoriesRoutes: FastifyPluginAsyncZod = async (app) => {
             params: categoryParamsSchema,
             response: { 200: categoryResponseSchema },
         } as const,
-        preHandler: [app.authenticate],
+        
         handler: deactivateCategoryHandler,
     });
 
@@ -113,7 +115,7 @@ export const categoriesRoutes: FastifyPluginAsyncZod = async (app) => {
                 200: z.object({ reordered: z.boolean() }),
             },
         },
-        preHandler: [app.authenticate],
+        
         handler: reorderCategoriesHandler,
     });
 
@@ -134,7 +136,7 @@ export const categoriesRoutes: FastifyPluginAsyncZod = async (app) => {
                 }),
             },
         },
-        preHandler: [app.authenticate],
+        
         handler: presignImageHandler,
     });
 };
