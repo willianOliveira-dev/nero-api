@@ -13,11 +13,13 @@ import { swaggerRoutes } from '@/modules/swagger/routes/swagger.routes';
 import { usersRoutes } from '@/modules/users/routes/users.routes';
 import { wishlistRoutes } from '@/modules/wishlist/routes/wishlist.routes';
 import { paymentsRoutes } from '@/modules/payments/routes/payments.routes';
+import { healthRoutes } from '@/modules/health/routes/health.routes';
 
 export async function registerAppRouter(app: FastifyInstance): Promise<void> {
     await app.register(swaggerRoutes);
     await app.register(authOpenApiRoutes);
     await app.register(authRoutes);
+    await app.register(healthRoutes);
 
     await app.register(homeRoutes, { prefix: '/api/v1/' });
     await app.register(usersRoutes, { prefix: '/api/v1/' });
