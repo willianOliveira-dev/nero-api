@@ -29,7 +29,7 @@ export default fp(
                         description: 'Localhost',
                     },
                     {
-                        url: 'https://api.example.com',
+                        url: env.BASE_URL,
                         description: 'Production',
                     },
                 ],
