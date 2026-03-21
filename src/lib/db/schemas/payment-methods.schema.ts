@@ -1,26 +1,3 @@
-/**
- * payment-methods.schema.ts
- * ─────────────────────────────────────────────────────────────
- * Métodos de pagamento salvos via Stripe.
- * ⚠ NUNCA armazenar número de cartão, CVV ou dados sensíveis.
- * Apenas metadados retornados pelo Stripe após o SetupIntent.
- *
- * Fluxo de cadastro (SetupIntent):
- *  1. POST /v1/me/payment-methods/setup-intent
- *     → cria SetupIntent no Stripe, retorna clientSecret
- *  2. SDK Stripe (mobile) coleta e confirma o cartão
- *  3. Stripe chama webhook setup_intent.succeeded
- *     → backend salva paymentMethodId + metadados
- *
- * Fluxo de cobrança (PaymentIntent):
- *  1. POST /v1/payments/intent
- *     → backend cria PaymentIntent com payment_method salvo
- *  2. SDK Stripe (mobile) confirma o pagamento
- *  3. Stripe chama webhook payment_intent.succeeded
- *     → backend cria o pedido e atualiza status
- * ─────────────────────────────────────────────────────────────
- */
-
 import {
     boolean,
     index,

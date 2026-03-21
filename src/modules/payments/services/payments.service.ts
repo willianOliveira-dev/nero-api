@@ -317,7 +317,6 @@ export class PaymentsService {
         const brand = mapCardBrand(card.brand ?? 'unknown');
 
         if (existing) {
-          
             await db
                 .update(paymentMethods)
                 .set({
