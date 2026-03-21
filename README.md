@@ -1,11 +1,11 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/willianOliveira-dev/nero-api/main/public/static/logo.png" 
+  <img src="https://raw.githubusercontent.com/willianOliveira-dev/nero-api/main/public/static/nero-320.png" 
        alt="Nero API" width="200" />
   
   <h1>Nero API</h1>
   <p>Backend RESTful de e-commerce de moda — construído com performance e escalabilidade</p>
 
-  <!-- Badges de tecnologia -->
+
   ![Node.js](https://img.shields.io/badge/Node.js-24-339933?style=flat-square&logo=nodedotjs)
   ![Fastify](https://img.shields.io/badge/Fastify-5.x-000000?style=flat-square&logo=fastify)
   ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript)
@@ -22,7 +22,7 @@
 
 A **Nero API** é o motor backend e-commerce completo projetado para gerenciar o catálogo, estoque, autenticação via sessões, carrinho, pagamentos seguros em compliance com PCI e logística de pedidos. Serve principalmente como infraestrutura core unificada para aplicação mobile `nero-mobile`, focado inteiramente em tempo real e em otimização I/O.
 <br/>
-[🔗 Acessar Swagger UI / API Reference Locais (http://localhost:8000/api-docs)](http://localhost:8000/api-docs)
+[🔗 Acessar Swagger UI / API Reference Locais (http://localhost:8000/docs)](http://localhost:8000/docs)
 
 ---
 
@@ -101,26 +101,37 @@ src/
 
 ### 5. Módulos da API
 
-*(Prefixo Global: `/api/v1`)*
+*(Geralmente utilizam o prefixo `/api/v1` exceto Autenticação/Webhooks)*
 
 #### Módulo: Auth
 Gerenciamento de vida da Sessão delegados ao BetterAuth.
+**Prefixo:** `/api/auth`
 | Método | Rota | Auth | Descrição |
 |--------|------|------|-----------|
-| ALL | `/auth/*` | ❌ | Proxys customizados para SignUp, SignIn, Sessão via Google/Email, e Refresh |
+| ALL | `/*` | ❌ | Proxys customizados para SignUp, SignIn, Sessão via Google/Email, e Refresh |
+| GET | `/open-api/generate-schema` | ❌ | Gerador do Schema OpenAPI exportado via Better Auth |
 
 #### Módulo: Products
-**Prefixo:** `/products` e `/admin/products`
+**Prefixo:** `/api/v1/products` e `/api/v1/admin/products`
 | Método | Rota | Auth | Descrição |
 |--------|------|------|-----------|
-| GET | `/products/search` | ❌ | Pesquisa produtos via FTS5 e filtros estruturados/categorias |
-| GET | `/products/slug/:slug` | ❌ | Resgatar metadados inteiros do produto em PDP com variações dinâmicas |
+| GET | `/products/search` | ✅ | Pesquisa produtos via FTS5 e filtros estruturados/categorias |
+| GET | `/products/slug/:slug` | ✅ | Resgatar metadados inteiros do produto em PDP com variações dinâmicas |
 | POST | `/admin/products` | ✅ | Cadastra itens base ao catálogo |
 | PATCH | `/admin/products/:id/skus/:skuId` | ✅ | Edita inventário de variação de SKU |
 | POST | `/admin/products/:id/images/presign`| ✅ | Criar token seguro com liberação de Cloudinary de imagens |
 
+#### Módulo: Categories & Brands
+**Prefixo:** `/api/v1/categories`, `/api/v1/brands` e rotas de `/admin`
+| Método | Rota | Auth | Descrição |
+|--------|------|------|-----------|
+| GET | `/categories` | ✅ | Listar categorias ativas com subcategorias aninhadas |
+| POST | `/admin/categories` | ✅ | Criar nova categoria (admin) via Admin dashboard |
+| GET | `/brands` | ✅ | Listar marcas ativas no sistema |
+| POST | `/admin/brands` | ✅ | Gerenciar novas marca com tokens do Cloudinary para Logos |
+
 #### Módulo: Users
-**Prefixo:** `/me`
+**Prefixo:** `/api/v1/me`
 | Método | Rota | Auth | Descrição |
 |--------|------|------|-----------|
 | GET | `/me` | ✅ | Retorna o Perfil consolidado (telefone, gênero favorito) do usuário logado |
@@ -129,7 +140,7 @@ Gerenciamento de vida da Sessão delegados ao BetterAuth.
 | PATCH | `/me/avatar/confirm`| ✅ | Consagra URL limpa da Cloudinary para avatar oficial |
 
 #### Módulo: Addresses
-**Prefixo:** `/me/addresses`
+**Prefixo:** `/api/v1/me/addresses`
 | Método | Rota | Auth | Descrição |
 |--------|------|------|-----------|
 | GET | `/me/addresses` | ✅ | Traz lista de endereços atrelados para Checkout |
@@ -138,7 +149,7 @@ Gerenciamento de vida da Sessão delegados ao BetterAuth.
 | DELETE| `/me/addresses/:id` | ✅ | Remove endereço salvado |
 
 #### Módulo: Cart
-**Prefixo:** `/cart`
+**Prefixo:** `/api/v1/cart`
 | Método | Rota | Auth | Descrição |
 |--------|------|------|-----------|
 | GET | `/cart` | ✅ | Mostra estado momentâneo, com totais (Subtotal, Tax, Frete calculados live) da Drizzle |
@@ -147,7 +158,7 @@ Gerenciamento de vida da Sessão delegados ao BetterAuth.
 | POST | `/cart/coupon` | ✅ | Acopla Validador de Cupom atrelado com total |
 
 #### Módulo: Orders
-**Prefixo:** `/orders` e `/admin/orders`
+**Prefixo:** `/api/v1/orders` e `/api/v1/admin/orders`
 | Método | Rota | Auth | Descrição |
 |--------|------|------|-----------|
 | GET | `/orders` | ✅ | Listar histórico do app do próprio Usuário |
@@ -156,32 +167,32 @@ Gerenciamento de vida da Sessão delegados ao BetterAuth.
 | PATCH | `/admin/orders/:id/status`| ✅ | Lojistas setando `shipped`, `delivered` no Tracker |
 
 #### Módulo: Payments & Webhooks
-**Prefixo:** `/me/payment-methods`, `/payments` e `/webhooks`
+**Prefixo:** `/api/v1/me/payment-methods`, `/api/v1/payments` e `/api/v1/webhooks`
 | Método | Rota | Auth | Descrição |
 |--------|------|------|-----------|
-| POST | `/me/payment-methods/setup-intent`| ✅ | Recebe o ClientSecret de Setup (Cartão da Billetera local do Auth stripe) |
+| POST | `/me/payment-methods/setup-intent`| ✅ | Recebe o ClientSecret de Setup (Cartão local retornado Auth stripe) |
 | PATCH | `/me/payment-methods/:id/default`| ✅ | Ajusta o Cartão Eleito pra Transação 1-Click |
 | POST | `/payments/intent` | ✅ | Finaliza Checkout, cria Order Pending, e gera Stripe Payment Intent com base em `cartId` |
 | POST | `/webhooks/stripe` | ❌ | Assinado. Dispara aprovação (`charge.succeeded` etc) modificando o Order para Confirmado e abatendo estoque. |
 
 #### Módulo: Wishlist
-**Prefixo:** `/wishlist`
+**Prefixo:** `/api/v1/wishlist`
 | Método | Rota | Auth | Descrição |
 |--------|------|------|-----------|
 | GET | `/wishlist` | ✅ | Paginação das listas fixadas pelo logado com metadados do preço / avaliação |
 | POST | `/wishlist/:productId` | ✅ | Toggle para pinar like na Vitrine |
 
 #### Módulo: Reviews
-**Prefixo:** `/reviews`
+**Prefixo:** `/api/v1/reviews`
 | Método | Rota | Auth | Descrição |
 |--------|------|------|-----------|
-| GET | `/reviews` | ❌ | Histórico dos depoimentos público num `ProductId` com métricas e paginador |
+| GET | `/reviews` | ✅ | Histórico dos depoimentos público num `ProductId` com métricas e paginador |
 | POST | `/reviews` | ✅ | Preencher notas, ReviewText, Media Arrays, marcando `isVerified=(Usuário comprou O produto)` |
 | POST | `/reviews/:id/like` | ✅ | Upvotes para comentários úteis |
 
-#### Múltiplos Módulos Auxiliares: Home/Brands/Categories
-- **Home**: (`GET /home` e `/admin/home`) Estrutura customizável de "Sections" injetados via banco dinâmico JSONB, para reodenação visual da UX (Top Vendas, New In, Categorias).
-- **Brands/Categories**: GETters puros para taxinomia. Sem auth. Admin gerencia criação.
+#### Módulo Auxiliar: Home
+**Prefixo:** `/api/v1/home` e `/api/v1/admin/home`
+- **Home**: (`GET /home` e `/admin/home`) Estrutura customizável de "Sections" injetados via banco dinâmico JSONB, para reodenação visual da UX (Top Vendas, New In, Categorias). Totalmente autenticado.
 
 ---
 
@@ -198,13 +209,13 @@ O Core central. Entidade independente para itens Genéricos (Single) ou Variante
 | compareAtPrice | integer | Old price "From" |
 | searchVector | tsvector | Vetor consolidado de busca Index GIN global |
 
-#### `product_skus` (Variações Filhas)
-| Coluna | Tipo | Descrição |
-|--------|------|-----------|
-| id | text | PK |
-| productId | text | Responde à Pai `products` (1:N) |
-| optionIds | jsonb | Array de string referindo o schema `variation_options` |
-| stock | integer | Abatimento central de quantidade logísitica |
+#### `product_skus` & `sku_option_map` (Variações Filhas N:M)
+| Tabela | Coluna | Tipo | Descrição |
+|--------|--------|------|-----------|
+| **product_skus** | id | text | PK para variação do SKU |
+| **product_skus** | productId | text | Responde à Pai `products` (1:N) |
+| **product_skus** | skuCode | varchar | Código global ean/customizável do Seller |
+| **sku_option_map** | skuId / variationOptionId | text | Pivot Table: Conecta SKU nas opções de tamanho/cor (Tabela originária de variação) |
 
 #### `orders` 
 Coração financeiro imutável.
@@ -228,7 +239,7 @@ A tabela `users` foi injetada pelo BetterAuth mas estendida a force com schema `
             |
             | N
    +------------------+
-   |      orders      | (Contém ID do Setup Intent para abater Stripe)
+   |  payment_methods | (Ids vindos do Stripe SDK / Stripe SetupIntent)
    |------------------|
    +------------------+
             | 1
@@ -243,20 +254,29 @@ A tabela `users` foi injetada pelo BetterAuth mas estendida a force com schema `
 
 ### 7. Variáveis de Ambiente
 
-As variáveis da infraestrutura podem ser achadas sob `src/config/env.ts`, criadas pelo ZOD como TypeGuard.
+As variáveis da infraestrutura podem ser achadas sob `src/config/env.ts`, criadas e parseadas via ZOD. Crie e baseie o setup com seu `.env.example`.
 
-| Variável | Obrigatória | Descrição | Exemplo |
-|----------|-------------|-----------|---------|
-| `NODE_ENV` | ❌ | Define "dev" ou "production" | `dev` |
-| `BASE_URL` | ❌ | URL Raíz pro Email Magic Link e Auth | `http://localhost:8000` |
-| `DATABASE_URL` | ✅ | Connection URI do Neon ou PG Serverless | `postgresql://user:pass@host/db` |
-| `STRIPE_SECRET_KEY` | ✅ | Chave Servidor em Pagamentos (Live Mode ou test_) | `sk_test_123` |
-| `STRIPE_WEBHOOK_SECRET` | ✅ | Assinador Sig para evitar Spoof Webhook | `whsec_abc` |
-| `CLOUDINARY_CLOUD_NAME` | ✅ | Dashboard id Name da CDN | `dx5ggmd...` |
-| `CLOUDINARY_API_KEY` | ✅ | Cloudinary Access | `1231...` |
-| `CLOUDINARY_API_SECRET` | ✅ | Segredo Admin dos Pre-signs | `lqrPJ..` |
-| `BETTER_AUTH_SECRET` | ✅ | Hash random de 32 bytes para Cripto de Cookies de sessão. | `G3hr5IA...` |
-| `SMTP_USER` / `SMTP_PASS` / `SMTP_HOST` | ✅ | Servidor MailTrapp/GMAIL para Forget Passwds | `smtp.gmail.com` |
+| Variável | Obrigatória | Descrição |
+|----------|-------------|-----------|
+| `NODE_ENV` | ❌ | Define o target (`dev`, `test`, `production`). Default: `dev` |
+| `PORT` | ❌ | Porta do serviço Fastify. Default: `3333` |
+| `HOST` | ❌ | IP de bind Host Address. Default: `0.0.0.0` |
+| `BASE_URL` | ❌ | URL Raíz pro sistema de Email / Internal. Default: `http://localhost:8000` |
+| `API_VERSION` | ✅ | Release version tagging para o Swagger Docs `1.0.0+` |
+| `ALLOWED_ORIGINS` | ❌ | CSV Array com domínios CORS válidos. Default: `http://localhost:3000` |
+| `LOG_LEVEL` | ❌ | Fastify Pino logger (`info`, `debug`, etc). Default: `info` |
+| `DATABASE_URL` | ✅ | Connection URI do Neon ou Postgres local |
+| `STRIPE_SECRET_KEY` | ✅ | Chave Servidor em Pagamentos (Live Mode ou test_) |
+| `STRIPE_WEBHOOK_SECRET` | ✅ | Assinador Sig para evitar Spoof Webhook Events |
+| `STRIPE_CURRENCY` | ❌ | Moeda de transação base Checkout API. Default: `brl` |
+| `PRICE_LOCALE` / `PRICE_CURRENCY` | ❌ | Helpers para formatter Intl e Zod locale schema |
+| `CLOUDINARY_CLOUD_NAME` | ✅ | Dashboard id Name da CDN de midia Storage |
+| `CLOUDINARY_API_KEY` | ✅ | Acesso Cliente ao Cloudinary SDK |
+| `CLOUDINARY_API_SECRET` | ✅ | Segredo Administrador Backend pra geração Auth Pre-Signs |
+| `BETTER_AUTH_SECRET` | ✅ | Hash de 32 bytes para Cripto de Cookies HMAC da Sessão |
+| `BETTER_AUTH_URL` | ❌ | Callbacks de OAUTH e validação do SDK (`http://localhost:8000`) |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | ✅ | BetterAuth Providers Configurações de Login Social |
+| `SMTP_HOST` / `PORT` / `USER` / `PASS` / `FROM` | ✅ | Credenciais envio EmailTrapp / SMTP Gateway Auth Emails |
 
 ---
 
@@ -280,7 +300,7 @@ pnpm install
 
 # 3. Configure as variáveis de ambiente baseando-se no Template Completo gerado
 cp .env.example .env
-# [!] Preencha meticulosamente suas credenciais válidas do PostgreSQL Neon e Stripe no `.env`
+# [!] Preencha meticulosamente suas credenciais válidas e evite expor o Better Auth Secret.
 
 # 4. Execute as migrations Schema p/ PostgreSQL (criando os relacionamentos)
 pnpm run drizzle:migrate
@@ -288,7 +308,7 @@ pnpm run drizzle:migrate
 # 5. Execute o seed automático (Prepara Perfis Admin e os Produtos Dummies base do App)
 pnpm db:seed
 
-# 6. Inicie o servidor (Hot Reload)
+# 6. Inicie o servidor (Hot Reload Typescript Direto)
 pnpm dev
 
 # 7. (Opcional - Stripe Webhook) Em outro terminal para habilitar os fluxos End-to-End Testes:
@@ -305,7 +325,7 @@ Esta api conta com um `Dockerfile` e um `docker-compose.yml` otimizados de **Mul
 # Subir todo o servidor backend com injeção segura de segredos:
 docker compose up -d --build
 ```
-> O comando do Compose vai sugar automaticamente sua flag local de `.env` da branch server-side e montá-las de modo memory-safe dentro do `node dist/server.js`, sem que o arquivo chumbado vaze nas camadas da imagem.
+> O comando do Compose vai sugar automaticamente sua flag local de `.env` da branch server-side e montá-las de modo memory-safe dentro do container, chamando a task compilada de Build: `pnpm run dev:start`.
 
 ---
 
@@ -313,29 +333,16 @@ docker compose up -d --build
 
 | Comando | Descrição |
 |---------|-----------|
-| `pnpm dev` | Usa instâncias nativas ES com o `tsx --watch` c/ flags custom Node Environment |
-| `pnpm build` | Faz transpilação `.ts`, conserta imports ESM via `tsc-alias` e copia imagens pro Dist. |
+| `pnpm dev` | Usa instâncias nativas ES com o `tsx --watch` c/ flags custom Node Environment (`.env`) |
+| `pnpm build` | Faz transpilação `.ts`, conserta imports ESM via `tsc-alias` e copia compilados diretório dist |
 | `pnpm dev:start` | Executa a versão compilada ESM de produção `node --env-file=.env dist/server.js` |
-| `pnpm drizzle:migrate` | Lê as mudanças TypeScript em Drizzle e injeta Migrate p/ DB |
+| `pnpm drizzle:migrate` | Lê as mudanças TypeScript em Drizzle e injeta Migrate p/ DB relacional remoto |
 | `pnpm stripe:listen` | Forwarding do evento global cloud pra localhost 8000 via Tunneling Stripe |
-| `pnpm test` | Executa o runner nativo Node.js Core com `node --test` em `tests/` e gera covertura em C8. |
+| `pnpm test` | Executa o runner nativo Node.js Core com `node --test` em `tests/` e gera covertura em C8 |
 
 ---
 
 ### 11. Testes com cURL
-
-#### Verificar Produto Listagem Search (Sem Auth)
-```bash
-curl -X GET "http://localhost:8000/api/v1/products/search?priceMax=9099&limit=10"
-```
-
-#### Fazer Login (Gerar Token / Cookie Session do App Client)
-```bash
-curl -X POST http://localhost:8000/api/auth/sign-in/email \
-  -H "Content-Type: application/json" \
-  -d '{"email":"ana.silva@email.com","password":"Senha123!"}' \
-  -c cookies.txt
-```
 
 #### Criar Assinatura SetupIntent para Salvar um Novo Cartão de Crédito Físico
 ```bash
@@ -379,4 +386,4 @@ Mantenha seus testes utilizando Gateway Test-Mode habilitado nas envs Stripes lo
 
 **Willian Oliveira**
 [![GitHub](https://img.shields.io/badge/GitHub-willianOliveira--dev-181717?style=flat-square&logo=github)](https://github.com/willianOliveira-dev)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Willian_Oliveira-0A66C2?style=flat-square&logo=linkedin)](https://linkedin.com/in/willian-oliveira)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Willian_Oliveira-0A66C2?style=flat-square&logo=linkedin)](https://www.linkedin.com/in/willian-oliveira-66a230353/)
