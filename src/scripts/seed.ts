@@ -1,5 +1,7 @@
-import { eq } from 'drizzle-orm';
+import { neonConfig, Pool } from '@neondatabase/serverless';
+import { eq, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/neon-serverless';
+import ws from 'ws';
 import { env } from '@/config/env';
 import { auth } from '../lib/auth/auth.lib';
 import { brands } from '../lib/db/schemas/brands.schema';
@@ -19,8 +21,6 @@ import { variationOptions } from '../lib/db/schemas/variation-options.schema';
 import { variationTypes } from '../lib/db/schemas/variation-types.schema';
 import { wishlistItems, wishlists } from '../lib/db/schemas/wishlists.schema';
 import { Price } from '../shared/utils/price.util';
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import ws from 'ws';
 
 neonConfig.webSocketConstructor = ws;
 
@@ -205,26 +205,21 @@ const IMG = {
 async function seed() {
     try {
         console.log('🌱 Iniciando seed...\n');
-
         console.log('🧹 Limpando banco...');
-        await db.delete(cartItems);
-        await db.delete(carts);
-        await db.delete(wishlistItems);
-        await db.delete(wishlists);
-        await db.delete(productReviews);
-        await db.delete(productImages);
-        await db.delete(skuOptionMap);
-        await db.delete(productSkus);
-        await db.delete(variationOptions);
-        await db.delete(variationTypes);
-        await db.delete(products);
-        await db.delete(userAddresses);
-        await db.delete(userProfiles);
-        await db.delete(categories);
-        await db.delete(brands);
-        await db.delete(coupons);
-        await db.delete(homeSections);
-        console.log('✅ Banco limpo.\n');
+        try {
+            await db.execute(sql`
+            TRUNCATE TABLE 
+              cart_items, carts, wishlist_items, wishlists, 
+              product_reviews, product_images, sku_option_map, 
+              product_skus, variation_options, variation_types, 
+              products, user_addresses, user_profiles, 
+              categories, brands, coupons, home_sections 
+            RESTART IDENTITY CASCADE;
+          `);
+            console.log('✅ Banco limpo.\n');
+        } catch (error) {
+            console.error('Aviso ao limpar banco:', error);
+        }
 
         console.log('🏷️  Inserindo marcas...');
         const insertedBrands = await db
@@ -3332,7 +3327,7 @@ async function seed() {
             },
         ] as (typeof homeSections.$inferInsert)[]);
         console.log('✅ Seções da home inseridas.\n');
-		
+
         console.log('⭐ Inserindo reviews...');
         await db.insert(productReviews).values([
             {
@@ -3630,9 +3625,7 @@ async function seed() {
         console.log(`   Categorias:              ${insertedCategories.length}`);
         console.log(`   Produtos totais:         ${insertedProducts.length}`);
         console.log(
-            `     ↳ Com variações:       ${
-                insertedProducts.length - simpleProducts
-            }`,
+            `     ↳ Com variações:       ${insertedProducts.length - simpleProducts}`,
         );
         console.log(`     ↳ Simples (sem var.):  ${simpleProducts}`);
         console.log(

@@ -12,7 +12,10 @@
     "dev": "tsx --watch --env-file=.env src/server.ts",
     "build": "tsc && tsc-alias -p tsconfig.json --resolve-full-paths && node scripts/copy-static.js",
     "dev:start": "node --env-file=.env dist/server.js",
-    "drizzle:migrate": "npx drizzle-kit generate && npx drizzle-kit migrate",
+    "dz:migrate": "pnpm exec drizzle-kit migrate",
+    "dz:generate": "pnpm exec drizzle-kit generate",
+    "dz:push": "pnpm dz:generate && pnpm dz:migrate",
+    "dz:studio": "pnpm drizzle-kit studio",
     "db:seed": "tsx src/scripts/seed.ts",
     "stripe:listen": "stripe listen --forward-to localhost:8000/api/v1/webhooks/stripe"
   },
