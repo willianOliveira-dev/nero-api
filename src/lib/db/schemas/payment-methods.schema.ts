@@ -7,6 +7,7 @@ import {
     text,
     timestamp,
     varchar,
+    uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { uuidv7 } from 'uuidv7';
 import { user } from './auth.schema';
@@ -64,14 +65,14 @@ export const paymentMethods = pgTable(
         /** Nome do titular impresso no cartão */
         cardholderName: text('cardholder_name'),
         /** Fingerprint do Stripe — detecta cartão duplicado */
-        fingerprint: text('fingerprint').unique(),
+        fingerprint: text('fingerprint'),
         isDefault: boolean('is_default').notNull().default(false),
         createdAt: timestamp('created_at').notNull().defaultNow(),
         updatedAt: timestamp('updated_at').notNull().defaultNow(),
     },
     (t) => [
         index('idx_payment_methods_user_id').on(t.userId),
-        index('idx_payment_methods_fingerprint').on(t.fingerprint),
+        uniqueIndex('unq_payment_methods_user_fingerprint').on(t.userId, t.fingerprint),
     ],
 );
 
